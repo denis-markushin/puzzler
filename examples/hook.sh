@@ -11,18 +11,18 @@ action=$(echo "$payload" | jq -r '.action')
 
 case "$action" in
   search)
-    curl -sS -H "Authorization: Bearer $TMS_TOKEN" \
+    curl -sS --fail -H "Authorization: Bearer $TMS_TOKEN" \
       "$TMS_URL/issues?label=$(echo "$payload" | jq -r '.repo')" |
       jq '{tickets: [.items[] | {id: .key, hash: .puzzlerHash}]}'
     ;;
   create)
-    curl -sS -X POST -H "Authorization: Bearer $TMS_TOKEN" \
+    curl -sS --fail -X POST -H "Authorization: Bearer $TMS_TOKEN" \
       -H 'Content-Type: application/json' \
       -d "$(echo "$payload" | jq '{title: .subject, body: .description, puzzlerHash: .hash}')" \
       "$TMS_URL/issues" | jq '{id: .key}'
     ;;
   close)
-    curl -sS -X POST -H "Authorization: Bearer $TMS_TOKEN" \
+    curl -sS --fail -X POST -H "Authorization: Bearer $TMS_TOKEN" \
       -H 'Content-Type: application/json' \
       -d "$(echo "$payload" | jq '{comment: .reason, state: "closed"}')" \
       "$TMS_URL/issues/$(echo "$payload" | jq -r '.id')" > /dev/null

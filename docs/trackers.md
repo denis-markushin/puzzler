@@ -28,8 +28,12 @@ repo:
   scheme in your hook instead.
 - Token scope: enough to create issues in the target project, add comments, and read/apply
   transitions.
-- `issueType` (default `Task`) is used only when `puzzle.typeMapping` does not resolve a type for a
-  given puzzle.
+- `issueType` (default `Task`) is the fallback used only when a puzzle captured **no** type and
+  **no** marker at all (the raw value is `null`). It is not a fallback for unmapped values: a type
+  or marker that `puzzle.typeMapping` does not recognize is sent to Jira unchanged, as the literal
+  issue type — see `docs/puzzle-format.md#ticket-type-inference`. A `typeMapping` that doesn't cover
+  every marker your pattern can produce will therefore try to create issues of a type Jira doesn't
+  have, and creation will fail.
 - `closeTransition` (default `Done`) must be the exact **name** of a workflow transition available
   from the issue's current status, not a status name and not a transition id.
 

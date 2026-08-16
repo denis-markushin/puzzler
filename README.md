@@ -33,6 +33,14 @@ Scan → Parse → Hash → Reconcile → Apply
    default branch; everywhere else (feature branches, an undetermined branch, or `--dry-run`) the
    run degrades to a plan and writes nothing.
 
+## Prerequisites
+
+`puzzler` scans by running `git ls-files`, so it always needs the `git` binary on `PATH` and a git
+working tree to run inside — neither is optional. The published Docker image already bundles
+`git`, so this only matters if you build and run `installDist` yourself. Missing `git` and "not
+inside a repository" are indistinguishable from `puzzler`'s point of view and produce the identical
+error; see `docs/troubleshooting.md`.
+
 ## Quick start (GitHub Issues, five minutes)
 
 1. Create `.puzzler.yml` at the repository root:

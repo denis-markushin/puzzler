@@ -5,7 +5,7 @@
 | Code | Meaning | Where it comes from |
 |---|---|---|
 | `0` | Run completed (or planned) without error. | Normal completion, including `--dry-run` and off-default-branch planning. |
-| `1` | An error stopped the run before or during reconciliation. | Unreadable/invalid config (`ConfigError`), no git repository (`NotARepository`), or a tracker/hook failure (`TrackerError`). |
+| `1` | An error stopped the run before or during reconciliation. | Unreadable/invalid config (`ConfigError`), git unavailable (`NotARepository` — see below), or a tracker/hook failure (`TrackerError`). |
 | `2` | A guard refused to apply a change it judged unsafe. | `GuardViolation` — see the two guards below. |
 
 ## Guards
@@ -33,6 +33,21 @@ Fires when a run would close more than half of the currently-open tickets for a 
 sudden wave of closures is the signature of a broken hash (a regex change, a normalization bug) or
 a tracker query returning the wrong scope, not of a normal cleanup commit. `--force` overrides this
 one when the mass closure is actually intended (e.g. after removing a large deprecated module).
+
+## "git listing is unavailable" / `NotARepository`
+
+> `git listing is unavailable in <root>, run puzzler inside a git repository`
+
+The scan is powered entirely by `git ls-files`, so `puzzler` requires the `git` binary on `PATH`
+and a git working tree to run inside — both are hard requirements, not just defaults. The published
+Docker image already has `git` installed; this mostly bites when running `installDist` output
+directly on a host without `git`.
+
+**This one message covers two different root causes, and `puzzler` cannot tell them apart:** a
+missing/unrunnable `git` binary and a working directory that simply isn't a git repository both
+make the underlying `git ls-files` call fail (return no output), and both surface as this exact
+`NotARepository` error. If you're sure you're inside a repository, check whether `git --version`
+even works in that environment before assuming the checkout itself is the problem.
 
 ## Duplicated tickets
 
