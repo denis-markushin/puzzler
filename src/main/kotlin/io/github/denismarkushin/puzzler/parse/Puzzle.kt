@@ -1,8 +1,8 @@
 package io.github.denismarkushin.puzzler.parse
 
 /**
- * Единица работы, объявленная в коде.
- * Хэш служит идентичностью, путь и строка — только справкой в теле тикета.
+ * A unit of work declared in the code.
+ * The hash serves as identity, the path and line are only reference material in the ticket body.
  */
 data class Puzzle(
     val hash: String,

@@ -17,8 +17,8 @@ Kotlin:
 
 ```kotlin
 class Cache {
-    // TODO(debt, 30min): вынести кэш в отдельный бин
-    //   нужен TTL и метрики
+    // TODO(debt, 30min): extract cache into a separate bean
+    //   needs TTL and metrics
     val store = mutableMapOf<String, String>()
 }
 ```
@@ -48,13 +48,13 @@ the head's indent. The first line at the same or lower indent ends the body — 
 that line on is ignored, it does not start a new puzzle:
 
 ```kotlin
-// TODO: вынести кэш
-//   нужен TTL          <- indent 2, included in the body
-// обычный комментарий   <- indent 0, same as head: body stops here
-//   и это тоже не тело  <- never reached, still ignored
+// TODO: extract cache
+//   needs TTL           <- indent 2, included in the body
+// ordinary comment       <- indent 0, same as head: body stops here
+//   and this is not body either  <- never reached, still ignored
 ```
 
-Body: `нужен TTL`.
+Body: `needs TTL`.
 
 This also means two markers placed back-to-back in the same comment block (no blank line or code
 line between them) do **not** produce two puzzles — the scanner treats consecutive comment lines
@@ -84,10 +84,10 @@ not a validation error.
 
 ## Ticket type inference
 
-1. If the pattern declares `type` and the head line matched it, that value is used.
+1. If the pattern declares `type` and the headline matched it, that value is used.
 2. Otherwise, if the pattern declares `marker` and it matched, that value is used (the default
    pattern falls back this way: a bare `FIXME: text` gets type `FIXME`).
-3. Otherwise the puzzle has no type.
+3. Otherwise, the puzzle has no type.
 
 The resulting raw value is then looked up in `puzzle.typeMapping`. A hit substitutes the mapped
 ticket type; a miss passes the raw value straight through as the ticket type (see
@@ -95,20 +95,20 @@ ticket type; a miss passes the raw value straight through as the ticket type (se
 
 ## Replacing the pattern for a different convention
 
-To recognize `// ЗАДАЧА(долг): текст` instead of `TODO`/`FIXME`/`HACK`:
+To recognize `// TASK(debt): text` instead of `TODO`/`FIXME`/`HACK`:
 
 ```yaml
 puzzle:
-  pattern: '^ЗАДАЧА(?:\((?<marker>[^)]+)\))?:\s*(?<subject>.+)$'
+  pattern: '^TASK(?:\((?<marker>[^)]+)\))?:\s*(?<subject>.+)$'
   typeMapping:
-    долг: "Technical Debt"
+    debt: "Technical Debt"
 ```
 
 Group by group:
 
-- `ЗАДАЧА` — the literal marker word, matched but not captured.
+- `TASK` — the literal marker word, matched but not captured.
 - `(?:\((?<marker>[^)]+)\))?` — an optional `(...)` suffix, captured as `marker` (not `type`,
-  since this convention keeps a single word rather than `type`+`estimate`). `долг` maps to
+  since this convention keeps a single word rather than `type`+`estimate`). `debt` maps to
   `Technical Debt` via `typeMapping`; any other word passes through unchanged as the ticket type.
 - `:\s*(?<subject>.+)` — the mandatory subject after the colon.
 

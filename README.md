@@ -5,8 +5,8 @@ issue tracker: it opens a ticket for every puzzle in the code, and closes the ti
 puzzle is removed. Your comments stay the backlog; the tracker just mirrors them.
 
 ```
-// TODO(debt, 30min): вынести кэш в отдельный бин
-//   нужен TTL и метрики
+// TODO(debt, 30min): extract cache into a separate bean
+//   needs TTL and metrics
 ```
 
 becomes an open ticket the moment that comment lands on the default branch, and gets closed the

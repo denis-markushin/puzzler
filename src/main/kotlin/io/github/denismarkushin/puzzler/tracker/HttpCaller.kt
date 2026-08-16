@@ -10,17 +10,17 @@ import java.time.Duration
 private val log = KotlinLogging.logger {}
 
 /**
- * Ошибка обращения к трекеру, пережившая ретраи.
+ * A tracker call error that survived the retries.
  */
 class TrackerError(
     message: String,
 ) : RuntimeException(message)
 
 /**
- * Единственная точка выхода в сеть.
- * Ретраит 429, пятисотые и оборванное соединение; клиентские ошибки падают сразу.
- * Ожидание ограничено с обеих сторон: без таймаутов зависший трекер остановил бы весь прогон навсегда.
- * `InterruptedException` намеренно не перехватывается — это значит, что процесс завершается.
+ * The single point of exit to the network.
+ * Retries 429s, five-hundreds and dropped connections; client errors fail immediately.
+ * Waiting is bounded on both sides: without timeouts a hung tracker would stall the whole run forever.
+ * `InterruptedException` is deliberately not caught — it means the process is shutting down.
  */
 class HttpCaller(
     private val attempts: Int = 3,

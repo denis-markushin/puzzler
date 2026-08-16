@@ -12,7 +12,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 private val log = KotlinLogging.logger {}
 
 /**
- * Итог прогона.
+ * Outcome of a run.
  */
 data class RunResult(
     val created: Int,
@@ -21,8 +21,8 @@ data class RunResult(
 )
 
 /**
- * Сценарий одного прогона.
- * Применение изменений разрешено только на ветке по умолчанию; во всех остальных случаях, включая неизвестную ветку, прогон деградирует в план.
+ * Scenario of a single run.
+ * Applying changes is allowed only on the default branch; in every other case, including an unknown branch, the run degrades into a plan.
  */
 class PuzzlerRun(
     private val config: PuzzlerConfig,

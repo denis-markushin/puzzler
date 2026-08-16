@@ -26,8 +26,8 @@ private val log = KotlinLogging.logger {}
 internal fun exitCode(error: RuntimeException): Int = if (error is GuardViolation) 2 else 1
 
 /**
- * Точка входа инструмента.
- * Отвечает за разбор аргументов и коды выхода: 1 — ошибка, 2 — отказ guard'а.
+ * Entry point of the tool.
+ * Responsible for argument parsing and exit codes: 1 is an error, 2 is a guard refusal.
  */
 class PuzzlerCli : CliktCommand(name = "puzzler") {
     private val config by option("--config").default(".puzzler.yml")

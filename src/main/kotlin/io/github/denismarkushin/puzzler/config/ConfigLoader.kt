@@ -9,15 +9,15 @@ import java.nio.file.Path
 import kotlin.io.path.readText
 
 /**
- * Ошибка конфигурации, обнаруженная до обращения к трекеру.
+ * Configuration error detected before the tracker is contacted.
  */
 class ConfigError(
     message: String,
 ) : RuntimeException(message)
 
 /**
- * Чтение и проверка .puzzler.yml.
- * Валидация выполняется до сканирования, чтобы сломанный конфиг не превращался в сломанный трекер.
+ * Reading and validation of .puzzler.yml.
+ * Validation runs before scanning, so a broken config never turns into a broken tracker.
  */
 object ConfigLoader {
     private val supported = setOf("jira", "github", "gitlab", "exec")

@@ -1,8 +1,8 @@
 package io.github.denismarkushin.puzzler.git
 
 /**
- * Ветка и коммит текущего прогона.
- * Ветка решает, разрешён ли полный цикл; коммит подставляется в постоянные ссылки.
+ * Branch and commit of the current run.
+ * The branch decides whether the full cycle is allowed; the commit is substituted into permalinks.
  */
 data class GitContext(
     val branch: String?,

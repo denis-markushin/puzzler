@@ -6,18 +6,18 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 /**
- * Обращение к бинарнику git.
- * Вынесено за интерфейс, чтобы тесты работали без настоящего репозитория.
+ * Access to the git binary.
+ * Pulled out behind an interface so tests can run without a real repository.
  */
 interface GitCommand {
     fun run(vararg args: String): String?
 }
 
 /**
- * Реализация поверх дочернего процесса.
- * Ненулевой код возврата, таймаут, недоступный бинарник и незапустившийся процесс — всё это отсутствие ответа, а не сбой инструмента.
- * Ни один поток процесса не остаётся трубой: stdout уходит во временный файл, stderr отбрасывает система, stdin закрывается сразу.
- * Иначе заполненный буфер трубы или зависший git блокируют чтение навсегда, и таймаут ниже недостижим.
+ * Implementation on top of a child process.
+ * A non-zero exit code, a timeout, a missing binary and a process that never started are all treated as no answer, not a tool failure.
+ * No process stream stays a pipe: stdout goes to a temp file, stderr is discarded by the system, stdin is closed immediately.
+ * Otherwise a filled pipe buffer or a hung git would block reads forever, making the timeout below unreachable.
  */
 class ProcessGitCommand(
     private val root: Path,

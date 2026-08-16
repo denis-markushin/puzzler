@@ -10,8 +10,8 @@ import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
 
 /**
- * Трекер поверх GitHub Issues.
- * Поле project трактуется как owner/repo, метки передаются в том же запросе, что создаёт issue.
+ * Tracker on top of GitHub Issues.
+ * The project field is treated as owner/repo, labels are passed in the same request that creates the issue.
  */
 class GithubTracker(
     private val config: TrackerConfig,

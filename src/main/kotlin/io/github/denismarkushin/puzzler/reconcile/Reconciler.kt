@@ -8,14 +8,14 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 private val log = KotlinLogging.logger {}
 
 /**
- * Отказ применять изменения из-за подозрительной разницы состояний.
+ * A refusal to apply changes because of a suspicious difference in state.
  */
 class GuardViolation(
     message: String,
 ) : RuntimeException(message)
 
 /**
- * Разница между кодом и трекером.
+ * The difference between the code and the tracker.
  */
 data class ReconcilePlan(
     val create: List<Puzzle>,
@@ -23,8 +23,8 @@ data class ReconcilePlan(
 )
 
 /**
- * Сверка кода с трекером.
- * Guard'ы отсекают случаи, когда разница объясняется сломанным окружением, а не выполненной работой.
+ * Reconciliation of the code against the tracker.
+ * The guards filter out cases where the difference is explained by a broken environment rather than completed work.
  */
 class Reconciler(
     private val tracker: TrackerPort,

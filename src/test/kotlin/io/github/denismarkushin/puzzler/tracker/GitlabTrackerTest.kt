@@ -33,7 +33,7 @@ private fun gitlab(baseUrl: String) = GitlabTracker(
     repoLabel = "puzzler",
 )
 
-private fun puzzle() = Puzzle("aaa111bbb222", "вынести кэш", "", null, null, null, "Cache.kt", 1)
+private fun puzzle() = Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1)
 
 class GitlabTrackerTest {
     @Test

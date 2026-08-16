@@ -3,8 +3,8 @@ package io.github.denismarkushin.puzzler.parse
 import io.github.denismarkushin.puzzler.hash.PuzzleHash
 
 /**
- * Превращение блока комментария в пазл.
- * Заголовок разбирается заданным regexp, телом становятся следующие строки с бо́льшим отступом.
+ * Turning a comment block into a puzzle.
+ * The headline is parsed with the configured regexp, the body is the following lines with a deeper indent.
  */
 class PuzzleParser(
     private val pattern: Regex,

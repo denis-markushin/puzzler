@@ -11,11 +11,11 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 /**
- * Трекер поверх пользовательского процесса.
- * Одна операция — один запуск: запрос уходит в stdin, ответ читается из stdout.
- * Хэш пазла обязан попасть в запрос create, иначе повторный search не найдёт тикет и пазл заведётся заново.
- * Ни один поток процесса не остаётся трубой: и запрос, и ответ идут через временные файлы, stderr отбрасывает система.
- * Ответ хука обязан нести полную форму: пустой или неполный JSON — это отказ хука, а не пустой список тикетов.
+ * Tracker on top of a user-supplied process.
+ * One operation is one run: the request goes to stdin, the answer is read from stdout.
+ * The puzzle hash must land in the create request, otherwise a later search will not find the ticket and the puzzle gets filed again.
+ * No process stream stays a pipe: both the request and the answer go through temp files, stderr is discarded by the system.
+ * The hook's answer must carry the full shape: empty or incomplete JSON is a hook failure, not an empty ticket list.
  */
 class ExecTracker(
     private val command: String,

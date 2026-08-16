@@ -31,7 +31,7 @@ private fun tracker(root: Path, command: String, timeout: Duration = Duration.of
     timeout = timeout,
 )
 
-private fun puzzle() = Puzzle("aaa111bbb222", "вынести кэш", "", null, null, null, "Cache.kt", 1)
+private fun puzzle() = Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1)
 
 class ExecTrackerTest {
     @Test

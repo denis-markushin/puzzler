@@ -1,8 +1,8 @@
 package io.github.denismarkushin.puzzler.tracker
 
 /**
- * Метки, которыми трекер хранит состояние.
- * Двоеточия не используются: Jira капризна к спецсимволам в labels.
+ * Labels the tracker uses to store state.
+ * Colons are avoided: Jira is fussy about special characters in labels.
  */
 object PuzzleLabels {
     private const val REPO_PREFIX = "puzzler-repo-"

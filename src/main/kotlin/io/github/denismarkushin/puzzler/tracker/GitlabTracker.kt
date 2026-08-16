@@ -10,8 +10,8 @@ import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
 
 /**
- * Трекер поверх GitLab Issues.
- * Поле project трактуется как числовой id либо как URL-encoded путь группы и проекта, метки передаются в том же запросе, что создаёт issue.
+ * Tracker on top of GitLab Issues.
+ * The project field is treated as either a numeric id or a URL-encoded group/project path, labels are passed in the same request that creates the issue.
  */
 class GitlabTracker(
     private val config: TrackerConfig,

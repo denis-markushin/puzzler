@@ -3,8 +3,8 @@ package io.github.denismarkushin.puzzler.config
 import io.github.denismarkushin.puzzler.parse.PuzzleParser
 
 /**
- * Настройки трекера.
- * Поля url и project трактуются каждой реализацией по-своему; command используется только типом exec.
+ * Tracker settings.
+ * The url and project fields are interpreted differently by each implementation; command is used only by type exec.
  */
 data class TrackerConfig(
     val type: String,
@@ -17,8 +17,8 @@ data class TrackerConfig(
 )
 
 /**
- * Привязка пазлов к репозиторию.
- * Имя попадает в метку и служит выборкой, шаблон ссылки — справкой в теле тикета.
+ * Binding of puzzles to a repository.
+ * The name goes into the label and acts as a filter, the link template is reference material in the ticket body.
  */
 data class RepoConfig(
     val name: String,
@@ -26,14 +26,14 @@ data class RepoConfig(
 )
 
 /**
- * Границы обхода рабочего дерева.
+ * Boundaries of the working tree traversal.
  */
 data class ScanConfig(
     val exclude: List<String> = emptyList(),
 )
 
 /**
- * Формат пазла и перевод его типа в тип тикета.
+ * Puzzle format and the mapping of its type to a ticket type.
  */
 data class PuzzleConfig(
     val pattern: String? = null,
@@ -45,7 +45,7 @@ data class PuzzleConfig(
 }
 
 /**
- * Полная конфигурация прогона.
+ * Complete configuration of a run.
  */
 data class PuzzlerConfig(
     val tracker: TrackerConfig,

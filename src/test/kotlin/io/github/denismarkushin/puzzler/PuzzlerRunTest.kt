@@ -69,16 +69,16 @@ class PuzzlerRunTest {
     @Test
     @Timeout(30)
     fun `run creates a ticket for a new puzzle`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("// TODO: вынести кэш")
+        root.resolve("Cache.kt").writeText("// TODO: extract cache")
         val tracker = RecordingTracker(mutableListOf())
         run(root, tracker, "main", false).execute()
-        assertThat(tracker.created.single().subject, "a new puzzle did not reach the tracker").isEqualTo("вынести кэш")
+        assertThat(tracker.created.single().subject, "a new puzzle did not reach the tracker").isEqualTo("extract cache")
     }
 
     @Test
     @Timeout(30)
     fun `run closes a ticket whose puzzle is gone`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("// TODO: живой пазл")
+        root.resolve("Cache.kt").writeText("// TODO: live puzzle")
         val hash = PuzzleParser(PuzzleParser.DEFAULT_PATTERN)
             .parse(SourceScanner(root, emptyList(), ListingGit("Cache.kt")).blocks().single())!!.hash
         val tracker = RecordingTracker(mutableListOf(Ticket("OLD-1", hash), Ticket("OLD-2", "gonehash1234")))
@@ -89,7 +89,7 @@ class PuzzlerRunTest {
     @Test
     @Timeout(30)
     fun `dry run touches nothing`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("// TODO: вынести кэш")
+        root.resolve("Cache.kt").writeText("// TODO: extract cache")
         val tracker = RecordingTracker(mutableListOf())
         run(root, tracker, "main", true).execute()
         assertThat(tracker.created.size, "dry run created a ticket anyway").isEqualTo(0)
@@ -98,7 +98,7 @@ class PuzzlerRunTest {
     @Test
     @Timeout(30)
     fun `feature branch degrades into a dry run`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("// TODO: вынести кэш")
+        root.resolve("Cache.kt").writeText("// TODO: extract cache")
         val tracker = RecordingTracker(mutableListOf())
         val result = run(root, tracker, "feature/cache", false).execute()
         assertThat(result.dryRun, "a feature branch was allowed to apply changes").isEqualTo(true)
@@ -107,7 +107,7 @@ class PuzzlerRunTest {
     @Test
     @Timeout(30)
     fun `unknown branch degrades into a dry run`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("// TODO: вынести кэш")
+        root.resolve("Cache.kt").writeText("// TODO: extract cache")
         val tracker = RecordingTracker(mutableListOf())
         val result = run(root, tracker, "", false).execute()
         assertThat(result.dryRun, "an unknown branch was allowed to apply changes").isEqualTo(true)
@@ -116,7 +116,7 @@ class PuzzlerRunTest {
     @Test
     @Timeout(30)
     fun `feature branch never calls tracker create`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("// TODO: вынести кэш")
+        root.resolve("Cache.kt").writeText("// TODO: extract cache")
         val tracker = RecordingTracker(mutableListOf())
         run(root, tracker, "feature/cache", false).execute()
         assertThat(tracker.created.size, "a feature branch was allowed to create tickets").isEqualTo(0)
@@ -125,7 +125,7 @@ class PuzzlerRunTest {
     @Test
     @Timeout(30)
     fun `dry run on default branch never calls tracker create`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("// TODO: вынести кэш")
+        root.resolve("Cache.kt").writeText("// TODO: extract cache")
         val tracker = RecordingTracker(mutableListOf())
         run(root, tracker, "main", true).execute()
         assertThat(tracker.created.size, "a dry run was allowed to create tickets").isEqualTo(0)

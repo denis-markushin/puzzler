@@ -19,7 +19,7 @@ private class FakeTracker(
     override fun close(id: String, reason: String) = Unit
 }
 
-private fun puzzle(hash: String) = Puzzle(hash, "работа $hash", "", null, null, null, "Cache.kt", 1)
+private fun puzzle(hash: String) = Puzzle(hash, "work $hash", "", null, null, null, "Cache.kt", 1)
 
 class ReconcilerTest {
     @Test

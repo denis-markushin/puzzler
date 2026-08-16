@@ -33,7 +33,7 @@ private fun github(baseUrl: String) = GithubTracker(
     repoLabel = "puzzler",
 )
 
-private fun puzzle() = Puzzle("aaa111bbb222", "вынести кэш", "", null, null, null, "Cache.kt", 1)
+private fun puzzle() = Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1)
 
 class GithubTrackerTest {
     @Test

@@ -3,8 +3,8 @@ package io.github.denismarkushin.puzzler.hash
 import java.security.MessageDigest
 
 /**
- * Идентичность пазла.
- * Хэш считается только от текста, поэтому переезд файла и сдвиг строк не порождают нового пазла.
+ * Identity of a puzzle.
+ * The hash is computed from the text alone, so moving the file or shifting its lines never produces a new puzzle.
  */
 object PuzzleHash {
     private val whitespace = Regex("\\s+")

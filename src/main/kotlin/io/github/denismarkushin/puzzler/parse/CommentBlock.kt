@@ -1,8 +1,8 @@
 package io.github.denismarkushin.puzzler.parse
 
 /**
- * Строка комментария без префикса.
- * Отступ считается от начала содержимого и разделяет заголовок пазла и его тело.
+ * A comment line with the prefix stripped.
+ * The indent is measured from the start of the content and separates the puzzle headline from its body.
  */
 data class CommentLine(
     val number: Int,
@@ -11,8 +11,8 @@ data class CommentLine(
 )
 
 /**
- * Непрерывная последовательность строк комментария одного вида в одном файле.
- * Единица, которую разбирает парсер.
+ * A contiguous run of comment lines of one kind in one file.
+ * The unit the parser works on.
  */
 data class CommentBlock(
     val path: String,

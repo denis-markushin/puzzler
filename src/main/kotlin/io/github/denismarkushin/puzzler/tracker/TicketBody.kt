@@ -5,8 +5,8 @@ import io.github.denismarkushin.puzzler.git.GitContext
 import io.github.denismarkushin.puzzler.parse.Puzzle
 
 /**
- * Текст тикета, собранный из пазла.
- * Позиция в коде идёт сюда, а не в идентичность, поэтому её устаревание безопасно.
+ * Ticket text assembled from a puzzle.
+ * The code location goes here rather than into the identity, so it going stale is harmless.
  */
 class TicketBody(
     private val repo: RepoConfig,
@@ -17,9 +17,9 @@ class TicketBody(
             appendLine(puzzle.description)
             appendLine()
         }
-        appendLine("Источник: ${location(puzzle)}")
-        puzzle.estimate?.let { estimate -> appendLine("Оценка: $estimate") }
-        appendLine("Заведено puzzler, пазл живёт в коде")
+        appendLine("Source: ${location(puzzle)}")
+        puzzle.estimate?.let { estimate -> appendLine("Estimate: $estimate") }
+        appendLine("Filed by puzzler, the puzzle lives in the code")
     }
 
     private fun location(puzzle: Puzzle): String =

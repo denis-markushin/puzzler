@@ -5,8 +5,8 @@ import io.github.denismarkushin.puzzler.git.GitContext
 import java.nio.file.Path
 
 /**
- * Выбор реализации трекера по конфигурации.
- * Единственное место, где тип из конфига превращается в объект.
+ * Selection of a tracker implementation from the configuration.
+ * The only place where the type from the config turns into an object.
  */
 object Trackers {
     fun of(config: PuzzlerConfig, context: GitContext, root: Path): TrackerPort {

@@ -11,16 +11,16 @@ import kotlin.io.path.fileSize
 import kotlin.io.path.isRegularFile
 
 /**
- * Отказ работать вне git-репозитория.
- * Список файлов берётся у git, поэтому без репозитория сканировать нечего.
+ * A refusal to work outside a git repository.
+ * The file listing comes from git, so there is nothing to scan without a repository.
  */
 class NotARepository(
     root: Path,
 ) : RuntimeException("git listing is unavailable in $root, run puzzler inside a git repository")
 
 /**
- * Обход рабочего дерева и выделение блоков комментариев.
- * О языках программирования не знает: опирается только на префиксы строк.
+ * Traversal of the working tree and extraction of comment blocks.
+ * Knows nothing about programming languages: relies only on line prefixes.
  */
 class SourceScanner(
     private val root: Path,

@@ -185,8 +185,8 @@ class ConfigLoaderTest {
             """.trimIndent(),
         )
         val loaded = ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret"))
-        assertThat(loaded.puzzle.regex().find("TODO: работа")?.groups?.get("subject")?.value, "default pattern was not applied")
-            .isEqualTo("работа")
+        assertThat(loaded.puzzle.regex().find("TODO: work")?.groups?.get("subject")?.value, "default pattern was not applied")
+            .isEqualTo("work")
     }
 
     @Test

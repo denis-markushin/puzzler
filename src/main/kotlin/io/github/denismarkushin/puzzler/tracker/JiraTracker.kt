@@ -10,8 +10,8 @@ import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
 
 /**
- * Трекер поверх Jira REST v3.
- * Переход в закрытое состояние разрешается по имени, потому что идентификаторы переходов свои в каждом workflow.
+ * Tracker on top of Jira REST v3.
+ * The transition into the closed state is resolved by name, because transition ids are specific to each workflow.
  */
 class JiraTracker(
     private val config: TrackerConfig,
