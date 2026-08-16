@@ -18,3 +18,6 @@ jobs:
       - run: ./gradlew build
       - run: ./gradlew installDist
       - run: ./build/install/puzzler/bin/puzzler --version
+      - run: docker build -t puzzler:ci .
+      - run: docker run --rm --entrypoint git puzzler:ci --version
+      - run: docker run --rm puzzler:ci --version
