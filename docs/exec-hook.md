@@ -1,0 +1,101 @@
+# Exec hook contract
+
+`tracker.type: exec` delegates ticket storage to an external command instead of a built-in
+adapter. Use it for a tracker `puzzler` does not speak natively (Linear, Redmine, an in-house
+system) or to insert custom logic (routing by team, deduping against another system).
+
+## How it is invoked
+
+- One operation is one process launch: the JSON request is written to the process's **stdin**, the
+  full stdout is read back and parsed as JSON, **stderr is discarded** (don't rely on it for
+  anything the hook needs the caller to see — log to a file if you need to debug).
+- The working directory is the repository root.
+- `tracker.command` is split on spaces with no shell parsing — `./hook.sh` is fine, `sh ./hook.sh`
+  is fine, but a path containing a space will break. Wrap such a command in a one-line launcher
+  script instead.
+- The process must exit `0`. A non-zero exit fails the run immediately with
+  `hook <command> exited with <code>`, whatever it printed.
+- The process has 60 seconds to finish. A hung hook is killed and fails the run with
+  `hook <command> timed out`.
+- `tracker.token` is **not** passed to the hook. Read your own secret directly from the process
+  environment inside the script (e.g. `$TMS_TOKEN`) — that's why the examples below use
+  `${PUZZLER_TOKEN}` only for `puzzler`'s own config validation and something else for the hook.
+
+## The three requests
+
+### `search`
+
+Request, sent once per run before anything is created or closed:
+
+```json
+{"action": "search", "repo": "puzzler"}
+```
+
+Required response — an array of every currently open ticket for that repo, each carrying back the
+hash it was created with:
+
+```json
+{"tickets": [{"id": "PROJ-7", "hash": "aaa111bbb222"}]}
+```
+
+An empty backlog is `{"tickets": []}`, not an omitted field. If `tickets` is missing or is not a
+JSON array, `puzzler` raises `hook <command> returned no tickets array for repo <repo>` instead of
+treating it as zero tickets.
+
+This distinction matters: a hook that is broken (wrong endpoint, expired credentials, unhandled
+exception swallowed into an empty body) can still exit `0` and print something that parses as
+JSON, like `{}` or `{"error": "unauthorized"}`. If that were silently read as "no tickets exist",
+`puzzler` would conclude every puzzle in the code is new and recreate a ticket for every single one
+of them on the next run. Requiring the exact shape turns a broken hook into a loud failure instead
+of a flood of duplicate tickets.
+
+### `create`
+
+Request:
+
+```json
+{
+  "action": "create",
+  "hash": "aaa111bbb222",
+  "subject": "вынести кэш в отдельный бин",
+  "description": "нужен TTL и метрики\n\nИсточник: Cache.kt:12\nЗаведено puzzler, пазл живёт в коде",
+  "type": "debt",
+  "estimate": "30min",
+  "assignee": null,
+  "repo": "puzzler",
+  "path": "Cache.kt",
+  "line": 12
+}
+```
+
+`type`, `estimate` and `assignee` are `null` when the puzzle pattern did not capture them.
+
+Required response — the id of the ticket the hook just created:
+
+```json
+{"id": "PROJ-9"}
+```
+
+**The hook must store `hash` somewhere the tracker can query back** (a custom field, a label, the
+description) — it is the only thing the next `search` call has to match this ticket against a
+puzzle still in the code. Lose it, and the ticket becomes invisible to future runs: it's neither
+recognized as "still needed" (so it won't be closed when the puzzle is removed — it will just sit
+open forever) nor findable as "this hash already has a ticket" (so it can be recreated too). An
+empty or missing `id` fails the run with `hook <command> returned no id for puzzle <hash>`.
+
+### `close`
+
+Request:
+
+```json
+{"action": "close", "id": "PROJ-9", "reason": "puzzle removed in a1b2c3d"}
+```
+
+The response body is not inspected, but it must still be valid JSON — an empty stdout fails with
+"produced unparsable output". The convention used by `examples/hook.sh` is to print `{}`.
+
+## Reference implementation
+
+`examples/hook.sh` implements all three actions against a generic REST-ish tracker using `curl`
+and `jq`, reading `$TMS_URL` and `$TMS_TOKEN` from the environment. Adapt the URLs and field
+mappings to whatever system you're integrating; keep the request/response shapes above.

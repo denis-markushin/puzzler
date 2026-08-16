@@ -1,0 +1,96 @@
+# Built-in trackers
+
+Three tracker types ship as HTTP adapters: `jira`, `github`, `gitlab`. All three retry `429` and
+`5xx` responses with backoff and fail fast on other 4xx responses (see `HttpCaller`). All three
+authenticate with `tracker.token`, which must be `${ENV_VAR}` — see `docs/configuration.md#secrets`.
+
+## Jira
+
+Minimal config:
+
+```yaml
+tracker:
+  type: jira
+  url: https://your-domain.atlassian.net
+  project: PROJ
+  token: ${PUZZLER_TOKEN}
+repo:
+  name: puzzler
+```
+
+- `url` — the Jira base URL, no trailing slash. Required in practice: the adapter builds requests
+  as `<url>/rest/api/3/...` and an unset `url` produces a broken URL rather than a clear error.
+- `project` — the Jira project **key** (e.g. `PROJ`), not its numeric id or display name.
+- Authentication is `Authorization: Bearer <token>`. This matches a **Jira Data Center / Server
+  Personal Access Token**. Jira **Cloud**'s REST API does not accept Bearer tokens for basic API
+  calls — it expects Basic auth with an account email plus an API token. If you're on Jira Cloud,
+  every request will fail with `401`; route through `tracker.type: exec` and translate the auth
+  scheme in your hook instead.
+- Token scope: enough to create issues in the target project, add comments, and read/apply
+  transitions.
+- `issueType` (default `Task`) is used only when `puzzle.typeMapping` does not resolve a type for a
+  given puzzle.
+- `closeTransition` (default `Done`) must be the exact **name** of a workflow transition available
+  from the issue's current status, not a status name and not a transition id.
+
+**Finding the transition name:** open an issue in the relevant project's workflow and read the
+button label of the transition that closes it (Jira shows transition names on the workflow
+buttons and on the workflow diagram's arrows), or call
+`GET /rest/api/3/issue/{key}/transitions` for an issue in that project — the response lists every
+transition currently available from its status, by name.
+
+**"transition X is not available"**: the tracker reports this verbatim, listing every transition
+the workflow actually offers from the ticket's current status. Either the name in `closeTransition`
+is wrong, or the ticket is in a status from which the transition you named isn't reachable
+(workflows differ by status; a name that works from "In Progress" may not exist from "Backlog").
+
+## GitHub
+
+Minimal config:
+
+```yaml
+tracker:
+  type: github
+  project: denis-markushin/puzzler
+  token: ${PUZZLER_TOKEN}
+repo:
+  name: puzzler
+```
+
+- `url` — defaults to `https://api.github.com`; set it for GitHub Enterprise Server
+  (`https://your-host/api/v3`).
+- `project` — `owner/repo`, exactly as it appears in the repository URL.
+- Token needs the `repo` scope (classic PAT) or Issues read/write (fine-grained PAT) on that
+  repository. A token without issue-write access fails with `403`.
+- Puzzle type becomes an issue **label** (not a GitHub "type" field — GitHub Issues has no native
+  ticket-type concept). `assignee`, when the puzzle pattern captures one, is passed through as a
+  GitHub username; an unknown username makes issue creation fail with `422`.
+
+**Typical errors**: `404` on every call almost always means `project` isn't `owner/repo` (a bare
+repo name, or a URL, will not resolve). `401`/`403` means the token is missing, expired, or lacks
+scope.
+
+## GitLab
+
+Minimal config:
+
+```yaml
+tracker:
+  type: gitlab
+  project: "12345678"
+  token: ${PUZZLER_TOKEN}
+repo:
+  name: puzzler
+```
+
+- `url` — defaults to `https://gitlab.com`; set it for self-managed GitLab.
+- `project` — either the project's numeric id (simplest, shown on the project's overview page) or
+  its URL-encoded `namespace%2Fproject` path. An un-encoded path containing `/` will not resolve.
+- Authentication uses the `PRIVATE-TOKEN` header, not `Authorization`. A personal, project, or
+  group access token with the `api` scope (or the narrower `write_repository` alone is not
+  sufficient — issues need `api`) and Reporter role or above on the project.
+- Puzzle type becomes an issue label, same as GitHub.
+
+**Typical errors**: `404` on a numeric `project` usually means the token can't see that project id
+(wrong instance, or no access); on a path `project` it usually means the slashes weren't
+URL-encoded.
