@@ -80,6 +80,9 @@ directory is `/repo`, so mount your checkout there.
   the label scheme, and `scan.exclude` globs.
 - [`docs/trackers.md`](docs/trackers.md) — Jira, GitHub and GitLab adapters: minimal config,
   required token scopes, and typical errors.
+- [`docs/gitlab-to-jira.md`](docs/gitlab-to-jira.md) — the worked example for the primary
+  deployment: code in GitLab, tickets in Jira Server. Complete `.puzzler.yml`, `.gitlab-ci.yml`,
+  credential storage, and troubleshooting.
 - [`docs/exec-hook.md`](docs/exec-hook.md) — the `exec` tracker's request/response contract, for
   plugging in a tracker with no built-in adapter. Paired with a working reference script at
   [`examples/hook.sh`](examples/hook.sh).

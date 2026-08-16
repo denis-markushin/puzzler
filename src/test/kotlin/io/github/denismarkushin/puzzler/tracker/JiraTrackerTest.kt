@@ -19,7 +19,6 @@ import io.github.denismarkushin.puzzler.git.GitContext
 import io.github.denismarkushin.puzzler.parse.Puzzle
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.Base64
 
 private fun server(): WireMockServer = WireMockServer(options().dynamicPort()).apply { start() }
 
@@ -168,7 +167,7 @@ class JiraTrackerTest {
             jira(wiremock.baseUrl(), token = "denis:secret").tickets("puzzler")
             val sent = wiremock.findAll(postRequestedFor(urlEqualTo("/rest/api/2/search"))).single().getHeader("Authorization")
             assertThat(sent, "a token carrying a user did not produce basic authorization")
-                .isEqualTo("Basic " + Base64.getEncoder().encodeToString("denis:secret".toByteArray(Charsets.UTF_8)))
+                .isEqualTo("Basic ZGVuaXM6c2VjcmV0")
         } finally {
             wiremock.stop()
         }

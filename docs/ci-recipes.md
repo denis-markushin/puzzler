@@ -64,6 +64,9 @@ name `.puzzler.yml` references) must still be defined as a masked/protected CI/C
 image's own entrypoint is the `puzzler` binary, so it's overridden with `entrypoint: [""]` to let
 `script:` decide dry-run vs. full run.
 
+For the full worked example of this pairing — GitLab CI with a Jira Server tracker, including the
+`.puzzler.yml`, credential storage, and troubleshooting — see `docs/gitlab-to-jira.md`.
+
 ## Jenkins (declarative pipeline)
 
 ```groovy

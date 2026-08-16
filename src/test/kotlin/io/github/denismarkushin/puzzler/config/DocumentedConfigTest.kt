@@ -42,4 +42,17 @@ class DocumentedConfigTest {
         }
         assertThat(failures, "readme configuration samples no longer parse").isEqualTo(emptyList())
     }
+
+    @Test
+    @Timeout(30)
+    fun `gitlab to jira guide has parsable samples`(@TempDir root: Path) {
+        val document = Path.of("docs/gitlab-to-jira.md")
+        val environment = mapOf("PUZZLER_JIRA_TOKEN" to "denis:secret")
+        val failures = samples(document).filter { sample ->
+            val file = root.resolve("sample.yml")
+            file.writeText(sample)
+            runCatching { ConfigLoader.load(file, environment) }.isFailure
+        }
+        assertThat(failures, "gitlab to jira guide samples no longer parse").isEqualTo(emptyList())
+    }
 }
