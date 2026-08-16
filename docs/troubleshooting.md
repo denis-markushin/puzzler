@@ -6,9 +6,15 @@
 |---|---|---|
 | `0` | Run completed (or planned) without error. | Normal completion, including `--dry-run` and off-default-branch planning. |
 | `1` | An error stopped the run before or during reconciliation. | Unreadable/invalid config (`ConfigError`), git unavailable (`NotARepository` — see below), or a tracker/hook failure (`TrackerError`). |
-| `2` | A guard refused to apply a change it judged unsafe. | `GuardViolation` — see the two guards below. |
+| `2` | A guard refused to apply a change it judged unsafe. | `GuardViolation` — see the two guards below. Only on a real run (default branch, no `--dry-run`); during a preview the same violation is reported as a warning, not a failure, and the run still exits `0`. |
 
 ## Guards
+
+During `--dry-run` or an off-default-branch run, a guard tripping is reported as a `log.warn` with the
+violation's own message instead of failing the run — a preview has nothing to lose by showing what
+the guard found, so it completes with `created 0, closed 0 (planned only)` and exits `0`. On a real
+run (default branch, no `--dry-run`) the same violation still propagates and exits `2` as described
+below.
 
 ### The empty-scan guard
 

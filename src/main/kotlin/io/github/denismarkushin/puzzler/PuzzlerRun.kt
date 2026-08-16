@@ -3,6 +3,7 @@ package io.github.denismarkushin.puzzler
 import io.github.denismarkushin.puzzler.config.PuzzlerConfig
 import io.github.denismarkushin.puzzler.git.GitContext
 import io.github.denismarkushin.puzzler.parse.PuzzleParser
+import io.github.denismarkushin.puzzler.reconcile.GuardViolation
 import io.github.denismarkushin.puzzler.reconcile.Reconciler
 import io.github.denismarkushin.puzzler.scan.SourceScanner
 import io.github.denismarkushin.puzzler.tracker.TrackerPort
@@ -35,14 +36,20 @@ class PuzzlerRun(
     private val force: Boolean,
 ) {
     fun execute(): RunResult {
-        val puzzles = scanner.blocks().mapNotNull { block -> parser.parse(block) }
-        val plan = reconciler.plan(config.repo.name, puzzles, force)
         val onDefaultBranch = !context.branch.isNullOrBlank() && context.branch == defaultBranch
         val planned = dryRun || !onDefaultBranch
+        val puzzles = scanner.blocks().mapNotNull { block -> parser.parse(block) }
         if (planned) {
+            val plan = try {
+                reconciler.plan(config.repo.name, puzzles, force)
+            } catch (violation: GuardViolation) {
+                log.warn { violation.message }
+                return RunResult(0, 0, true)
+            }
             log.info { "planning only: ${plan.create.size} to create, ${plan.close.size} to close in ${config.repo.name}" }
             return RunResult(plan.create.size, plan.close.size, true)
         }
+        val plan = reconciler.plan(config.repo.name, puzzles, force)
         plan.create.forEach { puzzle ->
             val id = tracker.create(puzzle)
             log.info { "created $id for puzzle ${puzzle.hash} at ${puzzle.path}:${puzzle.line}" }

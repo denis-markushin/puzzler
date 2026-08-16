@@ -11,6 +11,7 @@ import io.github.denismarkushin.puzzler.git.GitCommand
 import io.github.denismarkushin.puzzler.git.GitContext
 import io.github.denismarkushin.puzzler.parse.Puzzle
 import io.github.denismarkushin.puzzler.parse.PuzzleParser
+import io.github.denismarkushin.puzzler.reconcile.GuardViolation
 import io.github.denismarkushin.puzzler.reconcile.Reconciler
 import io.github.denismarkushin.puzzler.scan.SourceScanner
 import io.github.denismarkushin.puzzler.tracker.Ticket
@@ -128,5 +129,23 @@ class PuzzlerRunTest {
         val tracker = RecordingTracker(mutableListOf())
         run(root, tracker, "main", true).execute()
         assertThat(tracker.created.size, "a dry run was allowed to create tickets").isEqualTo(0)
+    }
+
+    @Test
+    @Timeout(30)
+    fun `dry run reports zero actions when the empty scan guard trips`(@TempDir root: Path) {
+        root.resolve("Cache.kt").writeText("no puzzle here")
+        val tracker = RecordingTracker(mutableListOf(Ticket("OLD-1", "somehash")))
+        val result = run(root, tracker, "main", true).execute()
+        assertThat(result, "a guard tripping during a dry run produced non-zero results").isEqualTo(RunResult(0, 0, true))
+    }
+
+    @Test
+    @Timeout(30)
+    fun `default branch run still throws when the empty scan guard trips`(@TempDir root: Path) {
+        root.resolve("Cache.kt").writeText("no puzzle here")
+        val tracker = RecordingTracker(mutableListOf(Ticket("OLD-1", "somehash")))
+        val failure = runCatching { run(root, tracker, "main", false).execute() }.exceptionOrNull()
+        assertThat(failure is GuardViolation, "a guard violation on the default branch was swallowed instead of thrown").isEqualTo(true)
     }
 }
