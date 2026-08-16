@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.jackson.yaml)
     implementation(libs.jackson.kotlin)
     implementation(libs.kotlin.logging)
+    runtimeOnly(libs.slf4j.simple)
     testImplementation(libs.assertk)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.wiremock)
