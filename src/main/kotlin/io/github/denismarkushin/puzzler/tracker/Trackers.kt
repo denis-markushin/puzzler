@@ -13,7 +13,7 @@ object Trackers {
         val body = TicketBody(config.repo, context)
         val caller = HttpCaller()
         return when (config.tracker.type) {
-            "jira" -> JiraTracker(config.tracker, config.puzzle, body, caller, config.repo.name)
+            "jira" -> JiraTracker(config.tracker, config.puzzle, body, caller, config.repo.name, 2)
             "github" -> GithubTracker(config.tracker, config.puzzle, body, caller, config.repo.name)
             "gitlab" -> GitlabTracker(config.tracker, config.puzzle, body, caller, config.repo.name)
             "exec" -> ExecTracker(config.tracker.command.orEmpty(), root, config.puzzle, body, config.repo.name)

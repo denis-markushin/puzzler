@@ -8,9 +8,12 @@ import io.github.denismarkushin.puzzler.parse.Puzzle
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
+import java.util.Base64
 
 /**
- * Tracker on top of Jira REST v3.
+ * Tracker on top of the Jira REST API.
+ * The API version comes from the tracker type rather than the configuration: Server and Data Center expose v2, Cloud exposes v3.
+ * The authentication scheme follows the token's shape — a value containing a colon is a user and password pair and becomes Basic, a bare value is a personal access token and stays Bearer.
  * The transition into the closed state is resolved by name, because transition ids are specific to each workflow.
  */
 class JiraTracker(
@@ -19,10 +22,11 @@ class JiraTracker(
     private val body: TicketBody,
     private val caller: HttpCaller,
     private val repoLabel: String,
+    private val version: Int,
 ) : TrackerPort {
     private val types = puzzle
     private val mapper = jacksonObjectMapper()
-    private val base = "${config.url}/rest/api/3"
+    private val base = "${config.url}/rest/api/$version"
 
     override fun tickets(repo: String): List<Ticket> {
         val collected = mutableListOf<Ticket>()
@@ -49,6 +53,9 @@ class JiraTracker(
         }
     }
 
+    // TODO(feature): render the description as Atlassian Document Format for Jira Cloud
+    //  API v3 rejects a plain string description, so a Cloud run would fail on create.
+    //  Convert TicketBody output into an ADF document node when the version is 3, then let ConfigLoader accept jira-cloud.
     override fun create(puzzle: Puzzle): String {
         val payload = mapper.createObjectNode().apply {
             putObject("fields").apply {
@@ -89,9 +96,18 @@ class JiraTracker(
 
     private fun request(uri: URI): HttpRequest.Builder =
         HttpRequest.newBuilder(uri)
-            .header("Authorization", "Bearer ${config.token}")
+            .header("Authorization", authorization())
             .header("Accept", "application/json")
             .header("Content-Type", "application/json")
+
+    private fun authorization(): String {
+        val token = config.token.orEmpty()
+        return if (token.contains(':')) {
+            "Basic ${Base64.getEncoder().encodeToString(token.toByteArray(Charsets.UTF_8))}"
+        } else {
+            "Bearer $token"
+        }
+    }
 
     private companion object {
         const val PAGE = 100

@@ -20,7 +20,7 @@ class ConfigError(
  * Validation runs before scanning, so a broken config never turns into a broken tracker.
  */
 object ConfigLoader {
-    private val supported = setOf("jira", "github", "gitlab", "exec")
+    private val supported = setOf("jira", "jira-cloud", "github", "gitlab", "exec")
     private val placeholder = Regex("\\$\\{([A-Z_][A-Z0-9_]*)}")
     private val mapper = ObjectMapper(YAMLFactory())
         .registerKotlinModule()
@@ -46,6 +46,9 @@ object ConfigLoader {
     private fun validate(config: PuzzlerConfig, token: String?) {
         if (config.tracker.type !in supported) {
             throw ConfigError("unsupported tracker type ${config.tracker.type}, expected one of $supported")
+        }
+        if (config.tracker.type == "jira-cloud") {
+            throw ConfigError("tracker type jira-cloud is not supported yet because Jira Cloud requires ADF descriptions, see docs/trackers.md")
         }
         if (config.tracker.type == "exec" && config.tracker.command.isNullOrBlank()) {
             throw ConfigError("tracker type exec requires a command")

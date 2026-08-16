@@ -1,7 +1,9 @@
 package io.github.denismarkushin.puzzler.config
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -82,6 +84,24 @@ class ConfigLoaderTest {
         val failure = runCatching { ConfigLoader.load(file, emptyMap()) }.exceptionOrNull()
         assertThat(failure?.message, "an unresolved variable was reported as a parse failure")
             .isEqualTo("environment variable ABSENT_TOKEN is not set")
+    }
+
+    @Test
+    fun `loader refuses jira cloud with the reason`(@TempDir root: Path) {
+        val file = config(
+            root,
+            """
+            tracker:
+              type: jira-cloud
+              project: PROJ
+              token: ${'$'}{PUZZLER_TOKEN}
+            repo:
+              name: puzzler
+            """.trimIndent(),
+        )
+        val failure = runCatching { ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret")) }.exceptionOrNull()
+        assertThat((failure as? ConfigError)?.message, "jira cloud was not refused with a reason naming ADF")
+            .isNotNull().contains("ADF")
     }
 
     @Test
