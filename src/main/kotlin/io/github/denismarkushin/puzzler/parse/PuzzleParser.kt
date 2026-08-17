@@ -18,8 +18,7 @@ class PuzzleParser(
         val body = block.lines.asSequence()
             .drop(1)
             .takeWhile { line -> line.indent > head.indent }
-            .map { line -> line.text.trim() }
-            .joinToString("\n")
+            .joinToString("\n") { line -> line.text.trim() }
         return Puzzle(
             hash = PuzzleHash.of(subject, body),
             subject = subject,
@@ -45,7 +44,7 @@ class PuzzleParser(
         val DEFAULT_PATTERN =
             Regex(
                 "^(?<marker>TODO|FIXME|HACK)(?:\\((?<type>[\\w-]+)(?:,\\s*(?<estimate>[^)]+))?\\))?" +
-                    "(?:\\s*\\[(?<labels>[^\\]]*)\\])?:\\s*(?<subject>.+)$",
+                    "(?:\\s*\\[(?<labels>[^]]*)])?:\\s*(?<subject>.+)$",
             )
     }
 }

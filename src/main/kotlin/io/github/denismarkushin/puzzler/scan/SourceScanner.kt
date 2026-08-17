@@ -24,7 +24,7 @@ class NotARepository(
  */
 class SourceScanner(
     private val root: Path,
-    private val exclude: List<String>,
+    exclude: List<String>,
     private val git: GitCommand,
 ) {
     private val matchers = exclude.flatMap { glob -> variants(glob) }.map { glob -> FileSystems.getDefault().getPathMatcher("glob:$glob") }
@@ -47,11 +47,11 @@ class SourceScanner(
 
     private fun readable(entry: String): Pair<String, String>? {
         val file = root.resolve(entry)
-        if (!file.isRegularFile() || file.fileSize() > maxSize) {
+        if (!file.isRegularFile() || file.fileSize() > MAX_SIZE) {
             return null
         }
         val bytes = file.toFile().readBytes()
-        if (bytes.take(probeSize).any { byte -> byte == zero }) {
+        if (bytes.take(PROBE_SIZE).any { byte -> byte == ZERO }) {
             return null
         }
         val decoder = Charsets.UTF_8.newDecoder()
@@ -84,9 +84,9 @@ class SourceScanner(
     }
 
     private companion object {
-        const val maxSize = 1L * 1024 * 1024
-        const val probeSize = 8000
-        const val zero: Byte = 0
+        const val MAX_SIZE = 1L * 1024 * 1024
+        const val PROBE_SIZE = 8000
+        const val ZERO: Byte = 0
         val prefix = Regex("^(\\s*)(//+|#+|--|\\*|;+)( ?.*)$")
     }
 }

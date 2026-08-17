@@ -6,7 +6,7 @@ import io.github.denismarkushin.puzzler.parse.Puzzle
 
 /**
  * Ticket text assembled from a puzzle.
- * The code location goes here rather than into the identity, so it going stale is harmless.
+ * The code location goes here rather than into the identity, so it's going stale is harmless.
  */
 class TicketBody(
     private val repo: RepoConfig,

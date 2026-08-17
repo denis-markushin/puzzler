@@ -17,7 +17,7 @@ interface GitCommand {
  * Implementation on top of a child process.
  * A non-zero exit code, a timeout, a missing binary and a process that never started are all treated as no answer, not a tool failure.
  * No process stream stays a pipe: stdout goes to a temp file, stderr is discarded by the system, stdin is closed immediately.
- * Otherwise a filled pipe buffer or a hung git would block reads forever, making the timeout below unreachable.
+ * Otherwise, a filled pipe buffer or a hung git would block reads forever, making the timeout below unreachable.
  */
 class ProcessGitCommand(
     private val root: Path,
@@ -31,7 +31,7 @@ class ProcessGitCommand(
                     .redirectOutput(sink.toFile())
                     .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start()
-            } catch (error: IOException) {
+            } catch (_: IOException) {
                 return null
             }
             process.outputStream.close()
