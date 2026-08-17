@@ -5,6 +5,7 @@ import io.github.denismarkushin.puzzler.parse.PuzzleParser
 /**
  * Tracker settings.
  * The url and project fields are interpreted differently by each implementation; command is used only by type exec.
+ * The labels are added to every ticket this repository files, on top of whatever the puzzle itself declares.
  */
 data class TrackerConfig(
     val type: String,
@@ -14,6 +15,7 @@ data class TrackerConfig(
     val closeTransition: String = "Done",
     val token: String? = null,
     val command: String? = null,
+    val labels: List<String> = emptyList(),
 )
 
 /**

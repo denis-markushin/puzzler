@@ -42,14 +42,15 @@ class GithubTracker(
     }
 
     override fun create(puzzle: Puzzle): String {
+        val labels = listOfNotNull(
+            PuzzleLabels.repo(repoLabel),
+            PuzzleLabels.hash(puzzle.hash),
+            types.ticketType(puzzle.type),
+        ).plus(PuzzleLabels.extra(config.labels, puzzle)).distinct()
         val payload = mapper.createObjectNode().apply {
             put("title", puzzle.subject)
             put("body", body.of(puzzle))
-            putArray("labels").apply {
-                add(PuzzleLabels.repo(repoLabel))
-                add(PuzzleLabels.hash(puzzle.hash))
-                types.ticketType(puzzle.type)?.let(::add)
-            }
+            putArray("labels").apply { labels.forEach(::add) }
             puzzle.assignee?.let { assignee -> putArray("assignees").add(assignee) }
         }
         val created = mapper.readTree(

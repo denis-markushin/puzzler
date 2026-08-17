@@ -22,16 +22,23 @@ private fun hook(root: Path, script: String): String {
     return "sh $file"
 }
 
-private fun tracker(root: Path, command: String, timeout: Duration = Duration.ofSeconds(60)) = ExecTracker(
+private fun tracker(
+    root: Path,
+    command: String,
+    timeout: Duration = Duration.ofSeconds(60),
+    labels: List<String> = emptyList(),
+) = ExecTracker(
     command = command,
     root = root,
     puzzle = PuzzleConfig(),
     body = TicketBody(RepoConfig("puzzler"), GitContext("main", "abc123")),
     repoLabel = "puzzler",
+    labels = labels,
     timeout = timeout,
 )
 
-private fun puzzle() = Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1)
+private fun puzzle(labels: List<String> = emptyList()) =
+    Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1, labels)
 
 class ExecTrackerTest {
     @Test
@@ -98,5 +105,16 @@ class ExecTrackerTest {
         val command = hook(root, "echo '{}'")
         val failure = runCatching { tracker(root, command).create(puzzle()) }.exceptionOrNull()
         assertThat(failure is TrackerError, "an empty create response was not rejected as a hook failure").isEqualTo(true)
+    }
+
+    @Test
+    @Timeout(30)
+    fun `tracker passes the labels in the create request`(@TempDir root: Path) {
+        val captured = root.resolve("captured.json")
+        val command = hook(root, "cat > '$captured'; echo '{\"id\":\"PROJ-9\"}'")
+        tracker(root, command, labels = listOf("tech-debt")).create(puzzle(listOf("perf")))
+        val sent = jacksonObjectMapper().readTree(captured.toFile().readText())
+        assertThat(sent.path("labels").map { label -> label.asText() }, "labels field did not carry both sources")
+            .isEqualTo(listOf("tech-debt", "perf"))
     }
 }

@@ -12,6 +12,8 @@ tracker:
   project: denis-markushin/puzzler
   token: ${PUZZLER_TOKEN}
   issueType: Task
+  labels:
+    - tech-debt
 repo:
   name: puzzler
   permalink: "https://github.com/denis-markushin/puzzler/blob/{sha}/{path}#L{line}"
@@ -36,6 +38,7 @@ puzzle:
 | `tracker.closeTransition` | string | `"Done"` | Jira only: name of the workflow transition applied when a ticket closes. |
 | `tracker.token` | string? | `null` | Must be an `${ENV_VAR}` reference (see Secrets below). Read by `jira`, `github`, `gitlab`. Ignored by `exec` — the hook script reads its own secrets from its own environment. |
 | `tracker.command` | string? | `null` | Required when `type: exec`. Shell command invoked once per operation; the JSON request goes to its stdin. |
+| `tracker.labels` | list of string | `[]` | Extra labels put on every ticket this repository files, on top of the labels a puzzle declares for itself. Rejected at load time unless each value is non-blank, free of whitespace, commas and colons, and free of the reserved `puzzler-` prefix. |
 | `repo.name` | string | — (required) | Identifies the repo in tickets: embedded in the `puzzler-repo-<name>` label and in the Jira JQL / GitHub / GitLab label filters used to list open tickets. |
 | `repo.permalink` | string? | `null` | Template for the "source" line in a ticket body. Placeholders `{sha}`, `{path}`, `{line}` are substituted. Falls back to `path:line` when unset. |
 | `scan.exclude` | list of string | `[]` | Extra glob patterns excluded from the scan, on top of whatever `.gitignore` already excludes (the file list always comes from `git ls-files`). |
@@ -73,7 +76,18 @@ the same request that creates the ticket:
   puzzles still present in the code.
 
 Labels never contain a colon — Jira rejects `:` in label values, so the format avoids it everywhere
-rather than special-casing one tracker.
+rather than special-casing one tracker. The same reasoning covers whitespace, which Jira Server
+rejects too.
+
+Two more sources sit on top of that state. `tracker.labels` applies to every ticket the repository
+files; a `[...]` group in the puzzle head line applies to one puzzle (see `docs/puzzle-format.md`).
+Both are validated by the same rule: non-blank, no whitespace, no comma, no colon, and never starting with the
+reserved `puzzler-` prefix. A bad value in the config fails the run before any request is sent. A bad
+value in a comment is skipped with a warning naming the file and line, so one typo cannot block
+reconciliation for the whole repository.
+
+Labels are applied when a ticket is created and never afterwards. `puzzler` creates and closes
+tickets; it does not update open ones, so relabelling a puzzle leaves its existing ticket alone.
 
 ## `scan.exclude` examples
 

@@ -29,16 +29,23 @@ class PuzzleParser(
             assignee = match.named("assignee"),
             path = block.path,
             line = head.number,
+            labels = labels(match),
         )
     }
 
     private fun MatchResult.named(name: String): String? =
         if (name in declared) groups[name]?.value else null
 
+    private fun labels(match: MatchResult): List<String> =
+        match.named("labels").orEmpty().split(',').map { label -> label.trim() }.filter { label -> label.isNotEmpty() }
+
     companion object {
         private val groupName = Regex("\\(\\?<([a-zA-Z][a-zA-Z0-9]*)>")
 
         val DEFAULT_PATTERN =
-            Regex("^(?<marker>TODO|FIXME|HACK)(?:\\((?<type>[\\w-]+)(?:,\\s*(?<estimate>[^)]+))?\\))?:\\s*(?<subject>.+)$")
+            Regex(
+                "^(?<marker>TODO|FIXME|HACK)(?:\\((?<type>[\\w-]+)(?:,\\s*(?<estimate>[^)]+))?\\))?" +
+                    "(?:\\s*\\[(?<labels>[^\\]]*)\\])?:\\s*(?<subject>.+)$",
+            )
     }
 }

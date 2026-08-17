@@ -2,6 +2,7 @@ package io.github.denismarkushin.puzzler.tracker
 
 import assertk.assertThat
 import assertk.assertions.contains
+import assertk.assertions.containsAtLeast
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -25,15 +26,22 @@ import org.junit.jupiter.api.Timeout
 
 private fun server(): WireMockServer = WireMockServer(options().dynamicPort()).apply { start() }
 
-private fun github(baseUrl: String) = GithubTracker(
-    config = TrackerConfig(type = "github", url = baseUrl, project = "denis-markushin/puzzler", token = "secret"),
+private fun github(baseUrl: String, labels: List<String> = emptyList()) = GithubTracker(
+    config = TrackerConfig(
+        type = "github",
+        url = baseUrl,
+        project = "denis-markushin/puzzler",
+        token = "secret",
+        labels = labels,
+    ),
     puzzle = PuzzleConfig(),
     body = TicketBody(RepoConfig("puzzler"), GitContext("main", "abc123")),
     caller = HttpCaller(pause = {}),
     repoLabel = "puzzler",
 )
 
-private fun puzzle() = Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1)
+private fun puzzle(labels: List<String> = emptyList()) =
+    Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1, labels)
 
 class GithubTrackerTest {
     @Test
@@ -121,6 +129,27 @@ class GithubTrackerTest {
             github(wiremock.baseUrl()).close("9", "puzzle removed in abc123")
             val patched = wiremock.findAll(patchRequestedFor(urlEqualTo("/repos/denis-markushin/puzzler/issues/9"))).single().bodyAsString
             assertThat(patched, "issue was not switched to the closed state").contains("closed")
+        } finally {
+            wiremock.stop()
+        }
+    }
+
+    @Test
+    @Timeout(30)
+    fun `tracker sends the configured and the puzzle labels`() {
+        val wiremock = server()
+        try {
+            wiremock.stubFor(
+                post(urlEqualTo("/repos/denis-markushin/puzzler/issues"))
+                    .willReturn(aResponse().withStatus(201).withBody("""{"number":9}""")),
+            )
+            github(wiremock.baseUrl(), labels = listOf("tech-debt")).create(puzzle(listOf("perf")))
+            val sent = jacksonObjectMapper().readTree(
+                wiremock.findAll(postRequestedFor(urlEqualTo("/repos/denis-markushin/puzzler/issues"))).single().bodyAsString,
+            )
+            val labels = sent.path("labels").map { label -> label.asText() }
+            assertThat(labels, "labels from the config and the puzzle did not both reach the create request")
+                .containsAtLeast("tech-debt", "perf")
         } finally {
             wiremock.stop()
         }

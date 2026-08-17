@@ -64,7 +64,8 @@ Request:
   "assignee": null,
   "repo": "puzzler",
   "path": "Cache.kt",
-  "line": 12
+  "line": 12,
+  "labels": ["tech-debt", "perf"]
 }
 ```
 
@@ -80,6 +81,10 @@ estimate line is wrong.
 already resolved through `puzzle.typeMapping` before it reaches the hook — this example's config has
 no `typeMapping`, so the raw marker (`debt`) and the mapped value happen to be identical. Configure a
 `typeMapping` and the hook receives the *mapped* value (e.g. `Technical Debt`), never the raw one.
+
+`labels` merges `tracker.labels` with the labels the puzzle declared for itself, already validated
+and deduped. It is `[]` when neither source supplied any. A hook written before this field existed
+keeps working — it simply ignores it.
 
 Required response — the id of the ticket the hook just created:
 

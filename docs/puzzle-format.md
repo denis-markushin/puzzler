@@ -7,17 +7,17 @@ line prefixes: `//`, `#`, `--`, `*` (the continuation lines of a `/* */` block),
 ## Default pattern
 
 ```
-^(?<marker>TODO|FIXME|HACK)(?:\((?<type>[\w-]+)(?:,\s*(?<estimate>[^)]+))?\))?:\s*(?<subject>.+)$
+^(?<marker>TODO|FIXME|HACK)(?:\((?<type>[\w-]+)(?:,\s*(?<estimate>[^)]+))?\))?(?:\s*\[(?<labels>[^\]]*)\])?:\s*(?<subject>.+)$
 ```
 
-Shape: `MARKER(type, estimate): subject`, where `type` and `estimate` are optional and only make
-sense together — `estimate` cannot appear without `type`.
+Shape: `MARKER(type, estimate) [labels]: subject`, where `type`, `estimate` and `labels` are all
+optional. `estimate` cannot appear without `type`; `labels` is independent of both.
 
 Kotlin:
 
 ```kotlin
 class Cache {
-    // TODO(debt, 30min): extract cache into a separate bean
+    // TODO(debt, 30min) [perf, security]: extract cache into a separate bean
     //   needs TTL and metrics
     val store = mutableMapOf<String, String>()
 }
@@ -75,8 +75,13 @@ silently swallowed. Separate puzzles with a blank line or a line of code:
 | `subject` | yes | Ticket title. A match without a non-blank `subject` is not a puzzle. |
 | `type` | no | Feeds `puzzle.typeMapping`; becomes the ticket type. |
 | `estimate` | no | Free-form text, carried into the ticket body. |
+| `labels` | no | Comma-separated list, split and trimmed. Merged with `tracker.labels` and put on the ticket. Values are hash-neutral, so relabelling never files a puzzle again. |
 | `assignee` | no | Carried to trackers that support assignment (GitHub). Not declared by the default pattern. |
 | `marker` | no | Stand-in for `type` when `type` is absent or not declared by the pattern. Used by `typeMapping` too. |
+
+A label that is blank, carries whitespace, a comma or a colon, or starts with the reserved `puzzler-` prefix
+is skipped, with a warning naming the file and the line. The ticket is still filed, without that
+label.
 
 `ConfigLoader` rejects any pattern that does not declare `subject`. Groups the pattern does not
 declare are simply not read — an omitted `estimate` group means every puzzle has `estimate = null`,
@@ -114,3 +119,11 @@ Group by group:
 
 No `estimate` or `assignee` group is declared here, so both are always `null` for puzzles matched
 by this pattern — that is legal, `subject` is the only group `ConfigLoader` requires.
+
+## Upgrading: the label group widens what matches
+
+Before the `labels` group existed, nothing could sit between the marker and the colon, so a comment
+shaped `// TODO [WIP]: text` did not match the default pattern and was ignored. It matches now, and
+files a ticket with the label `WIP`. Before upgrading, search your repository for head lines
+carrying a bracket in front of the colon and resolve each one, or pin `puzzle.pattern` to the old
+expression.
