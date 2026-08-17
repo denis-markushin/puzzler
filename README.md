@@ -22,7 +22,7 @@ Scan → Parse → Hash → Reconcile → Apply
    files and anything over 1&nbsp;MB are skipped, and contiguous comment lines are grouped into
    blocks.
 2. **Parse** — each block's first line is matched against a regexp; a match yields a puzzle
-   (subject, optional type/estimate/assignee, and a body from any more-indented following lines).
+   (subject, optional type/estimate/assignee/labels, and a body from any more-indented following lines).
 3. **Hash** — a puzzle's identity is a 12-character hash of its *normalized text only* (subject +
    body). Moving a file or shifting line numbers keeps the same ticket; editing the puzzle's text
    closes the old ticket and opens a new one — see `docs/puzzle-format.md`.
@@ -32,6 +32,12 @@ Scan → Parse → Hash → Reconcile → Apply
 5. **Apply** — new puzzles get created, orphaned tickets get closed. This step only runs on the
    default branch; everywhere else (feature branches, an undetermined branch, or `--dry-run`) the
    run degrades to a plan and writes nothing.
+
+Upgrading to a `puzzler` version with the labels group widens the default pattern: a comment like
+`// TODO [WIP]: fix`, previously ignored because a bracket sat in front of the colon, now matches
+and files a ticket for the label `WIP`. Every such comment already in your source becomes a ticket
+on the first default-branch run after the upgrade, all at once. Run `--dry-run` first and check the
+plan before you let that run touch the tracker.
 
 ## Prerequisites
 

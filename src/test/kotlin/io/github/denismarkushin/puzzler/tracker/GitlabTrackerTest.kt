@@ -25,15 +25,16 @@ import org.junit.jupiter.api.Timeout
 
 private fun server(): WireMockServer = WireMockServer(options().dynamicPort()).apply { start() }
 
-private fun gitlab(baseUrl: String) = GitlabTracker(
-    config = TrackerConfig(type = "gitlab", url = baseUrl, project = "42", token = "secret"),
+private fun gitlab(baseUrl: String, labels: List<String> = emptyList()) = GitlabTracker(
+    config = TrackerConfig(type = "gitlab", url = baseUrl, project = "42", token = "secret", labels = labels),
     puzzle = PuzzleConfig(),
     body = TicketBody(RepoConfig("puzzler"), GitContext("main", "abc123")),
     caller = HttpCaller(pause = {}),
     repoLabel = "puzzler",
 )
 
-private fun puzzle() = Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1)
+private fun puzzle(labels: List<String> = emptyList()) =
+    Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1, labels)
 
 class GitlabTrackerTest {
     @Test
@@ -111,6 +112,25 @@ class GitlabTrackerTest {
             gitlab(wiremock.baseUrl()).close("9", "puzzle removed in abc123")
             val sent = wiremock.findAll(putRequestedFor(urlEqualTo("/api/v4/projects/42/issues/9"))).single().bodyAsString
             assertThat(sent, "issue was not closed through a state event").contains("close")
+        } finally {
+            wiremock.stop()
+        }
+    }
+
+    @Test
+    @Timeout(30)
+    fun `tracker sends the configured and the puzzle labels`() {
+        val wiremock = server()
+        try {
+            wiremock.stubFor(
+                post(urlEqualTo("/api/v4/projects/42/issues")).willReturn(aResponse().withStatus(201).withBody("""{"iid":9}""")),
+            )
+            gitlab(wiremock.baseUrl(), labels = listOf("tech-debt")).create(puzzle(listOf("perf")))
+            val sent = jacksonObjectMapper().readTree(
+                wiremock.findAll(postRequestedFor(urlEqualTo("/api/v4/projects/42/issues"))).single().bodyAsString,
+            )
+            assertThat(sent.path("labels").asText(), "labels from the config and the puzzle did not both reach the create request")
+                .isEqualTo("puzzler-repo-puzzler,puzzler-hash-aaa111bbb222,tech-debt,perf")
         } finally {
             wiremock.stop()
         }

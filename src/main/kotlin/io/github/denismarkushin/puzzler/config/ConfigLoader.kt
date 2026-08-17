@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import io.github.denismarkushin.puzzler.tracker.PuzzleLabels
 import java.nio.file.Path
 import kotlin.io.path.readText
 
@@ -58,6 +59,11 @@ object ConfigLoader {
         }
         if (token != null && !placeholder.matches(token)) {
             throw ConfigError("tracker token must reference an environment variable, not a literal value")
+        }
+        config.tracker.labels.firstOrNull { label -> !PuzzleLabels.valid(label) }?.let { label ->
+            throw ConfigError(
+                "tracker label $label is not usable, a label carries no whitespace, no comma, no colon and no puzzler- prefix",
+            )
         }
         val pattern = runCatching { config.puzzle.regex() }
             .getOrElse { failure -> throw ConfigError("puzzle pattern is not a valid regexp: ${failure.message}") }

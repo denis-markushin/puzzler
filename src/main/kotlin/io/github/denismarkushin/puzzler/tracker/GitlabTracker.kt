@@ -46,7 +46,7 @@ class GitlabTracker(
             PuzzleLabels.repo(repoLabel),
             PuzzleLabels.hash(puzzle.hash),
             types.ticketType(puzzle.type),
-        )
+        ).plus(PuzzleLabels.extra(config.labels, puzzle)).distinct()
         val payload = mapper.createObjectNode().apply {
             put("title", puzzle.subject)
             put("description", body.of(puzzle))

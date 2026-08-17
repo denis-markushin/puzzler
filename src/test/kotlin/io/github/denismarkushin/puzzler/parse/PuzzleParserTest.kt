@@ -91,4 +91,18 @@ class PuzzleParserTest {
         val puzzle = PuzzleParser(pattern).parse(block)
         assertThat(puzzle?.type, "a pattern without a type group did not yield a null type").isNull()
     }
+
+    @Test
+    fun `parser reads labels attribute`() {
+        val block = CommentBlock("Cache.kt", listOf(CommentLine(7, 1, "TODO(debt, 30min) [ perf ,  security ]: extract cache")))
+        val puzzle = PuzzleParser(PuzzleParser.DEFAULT_PATTERN).parse(block)
+        assertThat(puzzle?.labels, "labels attribute was dropped").isEqualTo(listOf("perf", "security"))
+    }
+
+    @Test
+    fun `parser leaves labels empty without a bracket`() {
+        val block = CommentBlock("Cache.kt", listOf(CommentLine(7, 1, "TODO(debt): extract cache")))
+        val puzzle = PuzzleParser(PuzzleParser.DEFAULT_PATTERN).parse(block)
+        assertThat(puzzle?.labels, "a puzzle without a bracket invented labels").isEqualTo(emptyList<String>())
+    }
 }

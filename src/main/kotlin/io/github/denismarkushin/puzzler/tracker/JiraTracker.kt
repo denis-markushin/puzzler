@@ -66,6 +66,7 @@ class JiraTracker(
                 putArray("labels").apply {
                     add(PuzzleLabels.repo(repoLabel))
                     add(PuzzleLabels.hash(puzzle.hash))
+                    PuzzleLabels.extra(config.labels, puzzle).forEach(::add)
                 }
             }
         }

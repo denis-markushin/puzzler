@@ -23,6 +23,7 @@ class ExecTracker(
     puzzle: PuzzleConfig,
     private val body: TicketBody,
     private val repoLabel: String,
+    private val labels: List<String>,
     private val timeout: Duration = Duration.ofSeconds(60),
 ) : TrackerPort {
     private val types = puzzle
@@ -53,6 +54,7 @@ class ExecTracker(
             put("repo", repoLabel)
             put("path", puzzle.path)
             put("line", puzzle.line)
+            putArray("labels").apply { PuzzleLabels.extra(labels, puzzle).forEach(::add) }
         }
         val id = invoke(request.toString()).path("id").asText()
         if (id.isBlank()) {

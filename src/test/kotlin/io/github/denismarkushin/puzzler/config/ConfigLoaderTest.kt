@@ -220,4 +220,61 @@ class ConfigLoaderTest {
         val puzzle = PuzzleConfig(pattern = null, typeMapping = mapOf("debt" to "Technical Debt"))
         assertThat(puzzle.ticketType("perf"), "unmapped type was not passed through").isEqualTo("perf")
     }
+
+    @Test
+    fun `loader rejects a label carrying a space`(@TempDir root: Path) {
+        val file = config(
+            root,
+            """
+            tracker:
+              type: github
+              project: denis-markushin/puzzler
+              token: ${'$'}{PUZZLER_TOKEN}
+              labels:
+                - "cache warmup"
+            repo:
+              name: puzzler
+            """.trimIndent(),
+        )
+        val failure = runCatching { ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret")) }.exceptionOrNull()
+        assertThat(failure is ConfigError, "a label carrying a space was accepted").isEqualTo(true)
+    }
+
+    @Test
+    fun `loader rejects a label wearing the reserved prefix`(@TempDir root: Path) {
+        val file = config(
+            root,
+            """
+            tracker:
+              type: github
+              project: denis-markushin/puzzler
+              token: ${'$'}{PUZZLER_TOKEN}
+              labels:
+                - puzzler-repo-elsewhere
+            repo:
+              name: puzzler
+            """.trimIndent(),
+        )
+        val failure = runCatching { ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret")) }.exceptionOrNull()
+        assertThat(failure is ConfigError, "a label wearing the reserved prefix was accepted").isEqualTo(true)
+    }
+
+    @Test
+    fun `loader rejects an empty label`(@TempDir root: Path) {
+        val file = config(
+            root,
+            """
+            tracker:
+              type: github
+              project: denis-markushin/puzzler
+              token: ${'$'}{PUZZLER_TOKEN}
+              labels:
+                - ""
+            repo:
+              name: puzzler
+            """.trimIndent(),
+        )
+        val failure = runCatching { ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret")) }.exceptionOrNull()
+        assertThat(failure is ConfigError, "an empty label was accepted").isEqualTo(true)
+    }
 }

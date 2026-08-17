@@ -2,6 +2,7 @@ package io.github.denismarkushin.puzzler.tracker
 
 import assertk.assertThat
 import assertk.assertions.contains
+import assertk.assertions.containsAtLeast
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -22,8 +23,16 @@ import org.junit.jupiter.api.Timeout
 
 private fun server(): WireMockServer = WireMockServer(options().dynamicPort()).apply { start() }
 
-private fun jira(baseUrl: String, token: String = "secret", version: Int = 2) = JiraTracker(
-    config = TrackerConfig(type = "jira", url = baseUrl, project = "PROJ", issueType = "Task", closeTransition = "Done", token = token),
+private fun jira(baseUrl: String, token: String = "secret", version: Int = 2, labels: List<String> = emptyList()) = JiraTracker(
+    config = TrackerConfig(
+        type = "jira",
+        url = baseUrl,
+        project = "PROJ",
+        issueType = "Task",
+        closeTransition = "Done",
+        token = token,
+        labels = labels,
+    ),
     puzzle = PuzzleConfig(),
     body = TicketBody(RepoConfig("puzzler"), GitContext("main", "abc123")),
     caller = HttpCaller(pause = {}),
@@ -31,7 +40,8 @@ private fun jira(baseUrl: String, token: String = "secret", version: Int = 2) = 
     version = version,
 )
 
-private fun puzzle() = Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1)
+private fun puzzle(labels: List<String> = emptyList()) =
+    Puzzle("aaa111bbb222", "extract cache", "", null, null, null, "Cache.kt", 1, labels)
 
 class JiraTrackerTest {
     @Test
@@ -185,6 +195,24 @@ class JiraTrackerTest {
             jira(wiremock.baseUrl(), token = "personalaccesstoken").tickets("puzzler")
             val sent = wiremock.findAll(postRequestedFor(urlEqualTo("/rest/api/2/search"))).single().getHeader("Authorization")
             assertThat(sent, "a plain token did not stay on bearer authorization").isEqualTo("Bearer personalaccesstoken")
+        } finally {
+            wiremock.stop()
+        }
+    }
+
+    @Test
+    @Timeout(30)
+    fun `tracker sends the configured and the puzzle labels`() {
+        val wiremock = server()
+        try {
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue")).willReturn(aResponse().withStatus(201).withBody("""{"key":"PROJ-9"}""")))
+            jira(wiremock.baseUrl(), labels = listOf("tech-debt")).create(puzzle(listOf("perf")))
+            val sent = jacksonObjectMapper().readTree(
+                wiremock.findAll(postRequestedFor(urlEqualTo("/rest/api/2/issue"))).single().bodyAsString,
+            )
+            val labels = sent.path("fields").path("labels").map { label -> label.asText() }
+            assertThat(labels, "labels from the config and the puzzle did not both reach the create request")
+                .containsAtLeast("tech-debt", "perf")
         } finally {
             wiremock.stop()
         }

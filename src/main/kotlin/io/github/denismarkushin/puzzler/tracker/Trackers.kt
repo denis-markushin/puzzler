@@ -16,7 +16,7 @@ object Trackers {
             "jira" -> JiraTracker(config.tracker, config.puzzle, body, caller, config.repo.name, 2)
             "github" -> GithubTracker(config.tracker, config.puzzle, body, caller, config.repo.name)
             "gitlab" -> GitlabTracker(config.tracker, config.puzzle, body, caller, config.repo.name)
-            "exec" -> ExecTracker(config.tracker.command.orEmpty(), root, config.puzzle, body, config.repo.name)
+            "exec" -> ExecTracker(config.tracker.command.orEmpty(), root, config.puzzle, body, config.repo.name, config.tracker.labels)
             else -> throw TrackerError("unsupported tracker type ${config.tracker.type}")
         }
     }
