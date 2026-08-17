@@ -29,21 +29,21 @@ puzzle:
 
 ## Fields
 
-| Field | Type | Default | Purpose |
-|---|---|---|---|
-| `tracker.type` | string | — (required) | One of `jira`, `github`, `gitlab`, `exec`. |
-| `tracker.url` | string? | `null` | Jira: required, the instance base URL. GitHub: defaults to `https://api.github.com`. GitLab: defaults to `https://gitlab.com`. Unused by `exec`. |
-| `tracker.project` | string? | `null` | Required unless `type: exec`. Jira: project key. GitHub: `owner/repo`. GitLab: numeric project id or URL-encoded `group/project` path. |
-| `tracker.issueType` | string | `"Task"` | Jira only: issue type used when `puzzle.typeMapping` does not resolve one for a puzzle. |
-| `tracker.closeTransition` | string | `"Done"` | Jira only: name of the workflow transition applied when a ticket closes. |
-| `tracker.token` | string? | `null` | Must be an `${ENV_VAR}` reference (see Secrets below). Read by `jira`, `github`, `gitlab`. Ignored by `exec` — the hook script reads its own secrets from its own environment. |
-| `tracker.command` | string? | `null` | Required when `type: exec`. Shell command invoked once per operation; the JSON request goes to its stdin. |
-| `tracker.labels` | list of string | `[]` | Extra labels put on every ticket this repository files, on top of the labels a puzzle declares for itself. Rejected at load time unless each value is non-blank, free of whitespace, commas and colons, and free of the reserved `puzzler-` prefix. |
-| `repo.name` | string | — (required) | Identifies the repo in tickets: embedded in the `puzzler-repo-<name>` label and in the Jira JQL / GitHub / GitLab label filters used to list open tickets. |
-| `repo.permalink` | string? | `null` | Template for the "source" line in a ticket body. Placeholders `{sha}`, `{path}`, `{line}` are substituted. Falls back to `path:line` when unset. |
-| `scan.exclude` | list of string | `[]` | Extra glob patterns excluded from the scan, on top of whatever `.gitignore` already excludes (the file list always comes from `git ls-files`). |
-| `puzzle.pattern` | string? | `null` | Regexp with named groups, replaces the default puzzle pattern. See `docs/puzzle-format.md`. Must declare a `subject` group. |
-| `puzzle.typeMapping` | map of string to string | `{}` | Maps a puzzle's raw type/marker value to a ticket type. Unmapped values pass through unchanged. |
+| Field                     | Type                    | Default      | Purpose                                                                                                                                                                                                                                             |
+|---------------------------|-------------------------|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `tracker.type`            | string                  | — (required) | One of `jira`, `github`, `gitlab`, `exec`.                                                                                                                                                                                                          |
+| `tracker.url`             | string?                 | `null`       | Jira: required, the instance base URL. GitHub: defaults to `https://api.github.com`. GitLab: defaults to `https://gitlab.com`. Unused by `exec`.                                                                                                    |
+| `tracker.project`         | string?                 | `null`       | Required unless `type: exec`. Jira: project key. GitHub: `owner/repo`. GitLab: numeric project id or URL-encoded `group/project` path.                                                                                                              |
+| `tracker.issueType`       | string                  | `"Task"`     | Jira only: issue type used when `puzzle.typeMapping` does not resolve one for a puzzle.                                                                                                                                                             |
+| `tracker.closeTransition` | string                  | `"Done"`     | Jira only: name of the workflow transition applied when a ticket closes.                                                                                                                                                                            |
+| `tracker.token`           | string?                 | `null`       | Must be an `${ENV_VAR}` reference (see Secrets below). Read by `jira`, `github`, `gitlab`. Ignored by `exec` — the hook script reads its own secrets from its own environment.                                                                      |
+| `tracker.command`         | string?                 | `null`       | Required when `type: exec`. Shell command invoked once per operation; the JSON request goes to its stdin.                                                                                                                                           |
+| `tracker.labels`          | list of string          | `[]`         | Extra labels put on every ticket this repository files, on top of the labels a puzzle declares for itself. Rejected at load time unless each value is non-blank, free of whitespace, commas and colons, and free of the reserved `puzzler-` prefix. |
+| `repo.name`               | string                  | — (required) | Identifies the repo in tickets: embedded in the `puzzler-repo-<name>` label and in the Jira JQL / GitHub / GitLab label filters used to list open tickets.                                                                                          |
+| `repo.permalink`          | string?                 | `null`       | Template for the "source" line in a ticket body. Placeholders `{sha}`, `{path}`, `{line}` are substituted. Falls back to `path:line` when unset.                                                                                                    |
+| `scan.exclude`            | list of string          | `[]`         | Extra glob patterns excluded from the scan, on top of whatever `.gitignore` already excludes (the file list always comes from `git ls-files`).                                                                                                      |
+| `puzzle.pattern`          | string?                 | `null`       | Regexp with named groups, replaces the default puzzle pattern. See `docs/puzzle-format.md`. Must declare a `subject` group.                                                                                                                         |
+| `puzzle.typeMapping`      | map of string to string | `{}`         | Maps a puzzle's raw type/marker value to a ticket type. Unmapped values pass through unchanged.                                                                                                                                                     |
 
 The scanner also silently skips anything over 1&nbsp;MB and anything that looks binary (a null byte
 in its first 8000 bytes) — these never need to be listed under `scan.exclude`.

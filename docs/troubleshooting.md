@@ -2,11 +2,11 @@
 
 ## Exit codes
 
-| Code | Meaning | Where it comes from |
-|---|---|---|
-| `0` | Run completed (or planned) without error. | Normal completion, including `--dry-run` and off-default-branch planning. |
-| `1` | An error stopped the run before or during reconciliation. | Unreadable/invalid config (`ConfigError`), git unavailable (`NotARepository` — see below), or a tracker/hook failure (`TrackerError`). |
-| `2` | A guard refused to apply a change it judged unsafe. | `GuardViolation` — see the two guards below. Only on a real run (default branch, no `--dry-run`); during a preview the same violation is reported as a warning, not a failure, and the run still exits `0`. |
+| Code | Meaning                                                   | Where it comes from                                                                                                                                                                                         |
+|------|-----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `0`  | Run completed (or planned) without error.                 | Normal completion, including `--dry-run` and off-default-branch planning.                                                                                                                                   |
+| `1`  | An error stopped the run before or during reconciliation. | Unreadable/invalid config (`ConfigError`), git unavailable (`NotARepository` — see below), or a tracker/hook failure (`TrackerError`).                                                                      |
+| `2`  | A guard refused to apply a change it judged unsafe.       | `GuardViolation` — see the two guards below. Only on a real run (default branch, no `--dry-run`); during a preview the same violation is reported as a warning, not a failure, and the run still exits `0`. |
 
 ## Guards
 

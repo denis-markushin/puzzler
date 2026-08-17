@@ -9,11 +9,11 @@ authenticate with `tracker.token`, which must be `${ENV_VAR}` — see `docs/conf
 The API version `puzzler` speaks is fixed by the tracker type, not by a setting — there is no
 `apiVersion` field to get right or wrong:
 
-| Product | Tracker type | What goes in `token` |
-|---|---|---|
-| Jira Server, Jira Data Center before 8.14 | `jira` | `username:password` |
-| Jira Data Center 8.14 and later | `jira` | a personal access token |
-| Jira Cloud | `jira-cloud` | not supported yet |
+| Product                                   | Tracker type | What goes in `token`    |
+|-------------------------------------------|--------------|-------------------------|
+| Jira Server, Jira Data Center before 8.14 | `jira`       | `username:password`     |
+| Jira Data Center 8.14 and later           | `jira`       | a personal access token |
+| Jira Cloud                                | `jira-cloud` | not supported yet       |
 
 `jira` targets `<url>/rest/api/2` — what Server and Data Center actually expose. `jira-cloud` is a
 recognised type, not merely an unknown string, but `ConfigLoader` refuses it during configuration
