@@ -30,7 +30,8 @@ class SourceScanner(
     private val matchers = exclude.flatMap { glob -> variants(glob) }.map { glob -> FileSystems.getDefault().getPathMatcher("glob:$glob") }
 
     fun blocks(): List<CommentBlock> {
-        val listing = git.run("ls-files", "--cached", "--others", "--exclude-standard") ?: throw NotARepository(root)
+        val listing = git.run("-c", "core.quotePath=false", "ls-files", "--cached", "--others", "--exclude-standard")
+            ?: throw NotARepository(root)
         return listing.lineSequence()
             .map { entry -> entry.trim() }
             .filter { entry -> entry.isNotEmpty() }

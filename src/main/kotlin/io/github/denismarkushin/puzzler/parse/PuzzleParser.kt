@@ -43,7 +43,7 @@ class PuzzleParser(
 
         val DEFAULT_PATTERN =
             Regex(
-                "^(?<marker>TODO|FIXME|HACK)(?:\\((?<type>[\\w-]+)(?:,\\s*(?<estimate>[^)]+))?\\))?" +
+                "^(?<marker>TODO|FIXME|HACK)(?:\\((?<type>[\\p{L}\\p{N}_-]+)(?:,\\s*(?<estimate>[^)]+))?\\))?" +
                     "(?:\\s*\\[(?<labels>[^]]*)])?:\\s*(?<subject>.+)$",
             )
     }

@@ -7,7 +7,7 @@ line prefixes: `//`, `#`, `--`, `*` (the continuation lines of a `/* */` block),
 ## Default pattern
 
 ```
-^(?<marker>TODO|FIXME|HACK)(?:\((?<type>[\w-]+)(?:,\s*(?<estimate>[^)]+))?\))?(?:\s*\[(?<labels>[^\]]*)\])?:\s*(?<subject>.+)$
+^(?<marker>TODO|FIXME|HACK)(?:\((?<type>[\p{L}\p{N}_-]+)(?:,\s*(?<estimate>[^)]+))?\))?(?:\s*\[(?<labels>[^\]]*)\])?:\s*(?<subject>.+)$
 ```
 
 Shape: `MARKER(type, estimate) [labels]: subject`, where `type`, `estimate` and `labels` are all
@@ -120,6 +120,23 @@ Group by group:
 No `estimate` or `assignee` group is declared here, so both are always `null` for puzzles matched
 by this pattern — that is legal, `subject` is the only group `ConfigLoader` requires.
 
+## Encoding
+
+Source files are read as strict UTF-8. A file in any other encoding — cp1251, KOI8-R, latin-1 — is
+skipped without a warning, and every puzzle in it goes with it. Convert the file, or keep it out of
+the repository.
+
+The text of a puzzle carries no such limit. `subject`, the body, `type`, `estimate` and `labels`
+may all be written in any language:
+
+```kotlin
+// TODO(баг, 2 часа) [бэкенд]: почистить кэш
+//   вытеснение по TTL, метрики в Prometheus
+```
+
+File names are scanned in any language too: the listing asks git for raw names rather than the octal
+escapes it prints by default.
+
 ## Upgrading: the label group widens what matches
 
 Before the `labels` group existed, nothing could sit between the marker and the colon, so a comment
@@ -127,3 +144,11 @@ shaped `// TODO [WIP]: text` did not match the default pattern and was ignored. 
 files a ticket with the label `WIP`. Before upgrading, search your repository for head lines
 carrying a bracket in front of the colon and resolve each one, or pin `puzzle.pattern` to the old
 expression.
+
+## Upgrading: non-ascii types and file names
+
+Before this release the `type` group accepted ASCII only, so `// TODO(баг): текст` matched nothing at
+all and was ignored, and the file listing arrived with non-ASCII names escaped, so a file called
+`Кэш.kt` was never scanned. Both are visible now, and every such puzzle already in your source
+becomes a ticket on the first default-branch run after the upgrade, all at once. Run `--dry-run`
+first and check the plan before you let that run touch the tracker.

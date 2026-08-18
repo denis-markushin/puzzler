@@ -18,6 +18,7 @@ interface GitCommand {
  * A non-zero exit code, a timeout, a missing binary and a process that never started are all treated as no answer, not a tool failure.
  * No process stream stays a pipe: stdout goes to a temp file, stderr is discarded by the system, stdin is closed immediately.
  * Otherwise, a filled pipe buffer or a hung git would block reads forever, making the timeout below unreachable.
+ * Output is decoded as UTF-8 with replacement: a path that is not valid UTF-8 costs one skipped file, not the whole run.
  */
 class ProcessGitCommand(
     private val root: Path,
@@ -42,7 +43,7 @@ class ProcessGitCommand(
             if (process.exitValue() != 0) {
                 return null
             }
-            return Files.readString(sink).trim().ifEmpty { null }
+            return sink.toFile().readText().trim().ifEmpty { null }
         } finally {
             Files.deleteIfExists(sink)
         }

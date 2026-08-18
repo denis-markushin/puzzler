@@ -4,7 +4,9 @@ import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import io.github.denismarkushin.puzzler.git.GitCommand
+import io.github.denismarkushin.puzzler.git.ProcessGitCommand
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -79,5 +81,15 @@ class SourceScannerTest {
     fun `scanner refuses to work outside a repository`(@TempDir root: Path) {
         val failure = runCatching { SourceScanner(root, emptyList(), ListingGit(null)).blocks() }.exceptionOrNull()
         assertThat(failure is NotARepository, "missing git listing did not raise NotARepository").isEqualTo(true)
+    }
+
+    @Test
+    @Timeout(30)
+    fun `scanner reads a file with a cyrillic name`(@TempDir root: Path) {
+        ProcessGitCommand(root).run("init", ".")
+        root.resolve("Кэш.kt").writeText("// TODO: вынести кэш")
+        val blocks = SourceScanner(root, listOf("**/build/**"), ProcessGitCommand(root)).blocks()
+        assertThat(blocks.singleOrNull()?.lines?.single()?.text?.trim(), "a cyrillic file name never reached the scanner")
+            .isEqualTo("TODO: вынести кэш")
     }
 }
