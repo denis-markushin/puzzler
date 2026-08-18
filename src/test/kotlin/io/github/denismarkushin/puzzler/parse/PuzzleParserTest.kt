@@ -21,6 +21,13 @@ class PuzzleParserTest {
     }
 
     @Test
+    fun `parser reads a cyrillic type`() {
+        val block = CommentBlock("Кэш.kt", listOf(CommentLine(7, 1, "TODO(баг): почистить кэш")))
+        val puzzle = PuzzleParser(PuzzleParser.DEFAULT_PATTERN).parse(block)
+        assertThat(puzzle?.type, "a cyrillic type was not recognized").isEqualTo("баг")
+    }
+
+    @Test
     fun `parser reads estimate attribute`() {
         val block = CommentBlock("Cache.kt", listOf(CommentLine(7, 1, "TODO(debt, 30min): extract cache")))
         val puzzle = PuzzleParser(PuzzleParser.DEFAULT_PATTERN).parse(block)

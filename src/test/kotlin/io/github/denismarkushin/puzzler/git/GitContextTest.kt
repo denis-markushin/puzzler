@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.io.path.writeBytes
 
 private class FakeGit(
     private val answers: Map<String, String?>,
@@ -84,5 +85,16 @@ class GitContextTest {
     fun `process command returns real git output`() {
         val sha = ProcessGitCommand(Path.of("").toAbsolutePath()).run("rev-parse", "HEAD")
         assertThat(sha?.matches(Regex("[0-9a-f]{40}")) == true, "git output never made it back through the temp file").isEqualTo(true)
+    }
+
+    @Test
+    @Timeout(30)
+    fun `process command decodes invalid utf8 from git output instead of throwing`(@TempDir root: Path) {
+        val git = ProcessGitCommand(root)
+        git.run("init", ".")
+        root.resolve("bad.bin").writeBytes(byteArrayOf(0xFF.toByte(), 0xFE.toByte()) + "ok".toByteArray())
+        val sha = git.run("hash-object", "-w", "bad.bin")
+        val blob = git.run("cat-file", "blob", sha!!)
+        assertThat(blob, "invalid utf-8 in git's blob output threw instead of decoding leniently").isEqualTo("��ok")
     }
 }

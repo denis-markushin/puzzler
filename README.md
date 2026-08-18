@@ -39,6 +39,11 @@ and files a ticket for the label `WIP`. Every such comment already in your sourc
 on the first default-branch run after the upgrade, all at once. Run `--dry-run` first and check the
 plan before you let that run touch the tracker.
 
+This release also widens what the scanner and parser accept: `type` now matches non-ASCII text
+like `баг`, and the file listing itself stops escaping non-ASCII names, so a file called
+`Кэш.kt` is scanned instead of skipped. Both were invisible before, so the same caution applies —
+preview the run before it reaches the tracker.
+
 ## Prerequisites
 
 `puzzler` scans by running `git ls-files`, so it always needs the `git` binary on `PATH` and a git
