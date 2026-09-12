@@ -109,7 +109,7 @@ that masks cleanly.
   offers from the ticket's current status in the error message.
 - **Account permissions** — the Jira account behind the token needs, on the target project:
   Browse Projects, Create Issues, Add Comments, and Transition Issues (specifically, permission to
-  execute the transition named in `closeTransition`).
+  execute every transition listed in `closeTransition`).
 
 ## Troubleshooting
 

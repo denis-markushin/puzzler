@@ -53,7 +53,7 @@ repo:
   issue type — see `docs/puzzle-format.md#ticket-type-inference`. A `typeMapping` that doesn't cover
   every marker your pattern can produce will therefore try to create issues of a type Jira doesn't
   have, and creation will fail.
-- `closeTransition` (default `Done`) is the exact **name** of a workflow transition, or a list of
+- `closeTransition` (default `["Done"]`) is the exact **name** of a workflow transition, or a list of
   names tried in order — not a status name and not a transition id. `puzzler` applies the first
   listed transition the workflow offers from the ticket's current status, so
   `[To merged, Cancelled]` closes a worked-on ticket through `To merged` and one still in its
