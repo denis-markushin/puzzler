@@ -53,8 +53,11 @@ repo:
   issue type — see `docs/puzzle-format.md#ticket-type-inference`. A `typeMapping` that doesn't cover
   every marker your pattern can produce will therefore try to create issues of a type Jira doesn't
   have, and creation will fail.
-- `closeTransition` (default `Done`) must be the exact **name** of a workflow transition available
-  from the issue's current status, not a status name and not a transition id.
+- `closeTransition` (default `["Done"]`) is the exact **name** of a workflow transition, or a list of
+  names tried in order — not a status name and not a transition id. `puzzler` applies the first
+  listed transition the workflow offers from the ticket's current status, so
+  `[To merged, Cancelled]` closes a worked-on ticket through `To merged` and one still in its
+  initial status through `Cancelled`.
 
 **Finding the transition name:** open an issue in the relevant project's workflow and read the
 button label of the transition that closes it (Jira shows transition names on the workflow
@@ -62,10 +65,11 @@ buttons and on the workflow diagram's arrows), or call
 `GET /rest/api/2/issue/{key}/transitions` for an issue in that project — the response lists every
 transition currently available from its status, by name.
 
-**"transition X is not available"**: the tracker reports this verbatim, listing every transition
-the workflow actually offers from the ticket's current status. Either the name in `closeTransition`
-is wrong, or the ticket is in a status from which the transition you named isn't reachable
-(workflows differ by status; a name that works from "In Progress" may not exist from "Backlog").
+**"none of [...] is available"**: the tracker reports this verbatim, listing the configured names
+and every transition the workflow actually offers from the ticket's current status. Either a name
+in `closeTransition` is wrong, or the ticket is in a status from which none of the listed
+transitions is reachable (workflows differ by status; a name that works from "In Progress" may not
+exist from "Backlog") — add the transition that status does offer to the list.
 
 ## GitHub
 

@@ -23,13 +23,19 @@ import org.junit.jupiter.api.Timeout
 
 private fun server(): WireMockServer = WireMockServer(options().dynamicPort()).apply { start() }
 
-private fun jira(baseUrl: String, token: String = "secret", version: Int = 2, labels: List<String> = emptyList()) = JiraTracker(
+private fun jira(
+    baseUrl: String,
+    token: String = "secret",
+    version: Int = 2,
+    labels: List<String> = emptyList(),
+    closeTransition: List<String> = listOf("Done"),
+) = JiraTracker(
     config = TrackerConfig(
         type = "jira",
         url = baseUrl,
         project = "PROJ",
         issueType = "Task",
-        closeTransition = "Done",
+        closeTransition = closeTransition,
         token = token,
         labels = labels,
     ),
@@ -141,8 +147,70 @@ class JiraTrackerTest {
                     aResponse().withStatus(200).withBody("""{"transitions":[{"id":"11","name":"In Progress"}]}"""),
                 ),
             )
-            val failure = runCatching { jira(wiremock.baseUrl()).close("PROJ-9", "puzzle removed in abc123") }.exceptionOrNull()
-            assertThat(failure is TrackerError, "a missing transition did not raise TrackerError").isEqualTo(true)
+            val failure = runCatching {
+                jira(wiremock.baseUrl(), closeTransition = listOf("To merged", "Cancelled")).close("PROJ-9", "puzzle removed in abc123")
+            }.exceptionOrNull()
+            assertThat(failure is TrackerError, "a list with no offered transition did not raise TrackerError").isEqualTo(true)
+        } finally {
+            wiremock.stop()
+        }
+    }
+
+    @Test
+    @Timeout(30)
+    fun `tracker falls back to the next configured transition the workflow offers`() {
+        val wiremock = server()
+        try {
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue/PROJ-9/comment")).willReturn(aResponse().withStatus(201).withBody("{}")))
+            wiremock.stubFor(
+                get(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions")).willReturn(
+                    aResponse().withStatus(200).withBody("""{"transitions":[{"id":"11","name":"To do"},{"id":"41","name":"Cancelled"}]}"""),
+                ),
+            )
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions")).willReturn(aResponse().withStatus(204)))
+            jira(wiremock.baseUrl(), closeTransition = listOf("To merged", "Cancelled")).close("PROJ-9", "puzzle removed in abc123")
+            val sent = wiremock.findAll(postRequestedFor(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions"))).single().bodyAsString
+            assertThat(sent, "the offered fallback transition was not applied").contains("\"id\":\"41\"")
+        } finally {
+            wiremock.stop()
+        }
+    }
+
+    @Test
+    @Timeout(30)
+    fun `tracker prefers the earlier configured transition when the workflow offers both`() {
+        val wiremock = server()
+        try {
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue/PROJ-9/comment")).willReturn(aResponse().withStatus(201).withBody("{}")))
+            wiremock.stubFor(
+                get(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions")).willReturn(
+                    aResponse().withStatus(200).withBody("""{"transitions":[{"id":"41","name":"Cancelled"},{"id":"31","name":"To merged"}]}"""),
+                ),
+            )
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions")).willReturn(aResponse().withStatus(204)))
+            jira(wiremock.baseUrl(), closeTransition = listOf("To merged", "Cancelled")).close("PROJ-9", "puzzle removed in abc123")
+            val sent = wiremock.findAll(postRequestedFor(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions"))).single().bodyAsString
+            assertThat(sent, "the workflow order won over the configured order").contains("\"id\":\"31\"")
+        } finally {
+            wiremock.stop()
+        }
+    }
+
+    @Test
+    @Timeout(30)
+    fun `tracker applies the first of two offered transitions sharing a configured name`() {
+        val wiremock = server()
+        try {
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue/PROJ-9/comment")).willReturn(aResponse().withStatus(201).withBody("{}")))
+            wiremock.stubFor(
+                get(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions")).willReturn(
+                    aResponse().withStatus(200).withBody("""{"transitions":[{"id":"31","name":"Done"},{"id":"32","name":"Done"}]}"""),
+                ),
+            )
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions")).willReturn(aResponse().withStatus(204)))
+            jira(wiremock.baseUrl()).close("PROJ-9", "puzzle removed in abc123")
+            val sent = wiremock.findAll(postRequestedFor(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions"))).single().bodyAsString
+            assertThat(sent, "the last of two same-named transitions won over the first").contains("\"id\":\"31\"")
         } finally {
             wiremock.stop()
         }

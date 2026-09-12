@@ -57,6 +57,9 @@ object ConfigLoader {
         if (config.tracker.type != "exec" && config.tracker.project.isNullOrBlank()) {
             throw ConfigError("tracker type ${config.tracker.type} requires a project")
         }
+        if (config.tracker.type == "jira" && config.tracker.closeTransition.let { names -> names.isEmpty() || names.any { name -> name.isNullOrBlank() } }) {
+            throw ConfigError("tracker type jira requires closeTransition to name at least one transition and no blank ones")
+        }
         if (token != null && !placeholder.matches(token)) {
             throw ConfigError("tracker token must reference an environment variable, not a literal value")
         }
