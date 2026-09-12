@@ -198,6 +198,26 @@ class JiraTrackerTest {
 
     @Test
     @Timeout(30)
+    fun `tracker applies the first of two offered transitions sharing a configured name`() {
+        val wiremock = server()
+        try {
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue/PROJ-9/comment")).willReturn(aResponse().withStatus(201).withBody("{}")))
+            wiremock.stubFor(
+                get(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions")).willReturn(
+                    aResponse().withStatus(200).withBody("""{"transitions":[{"id":"31","name":"Done"},{"id":"32","name":"Done"}]}"""),
+                ),
+            )
+            wiremock.stubFor(post(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions")).willReturn(aResponse().withStatus(204)))
+            jira(wiremock.baseUrl()).close("PROJ-9", "puzzle removed in abc123")
+            val sent = wiremock.findAll(postRequestedFor(urlEqualTo("/rest/api/2/issue/PROJ-9/transitions"))).single().bodyAsString
+            assertThat(sent, "the last of two same-named transitions won over the first").contains("\"id\":\"31\"")
+        } finally {
+            wiremock.stop()
+        }
+    }
+
+    @Test
+    @Timeout(30)
     fun `tracker targets the version two api`() {
         val wiremock = server()
         try {
