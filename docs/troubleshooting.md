@@ -89,7 +89,8 @@ Work through these in order:
 2. **`--dry-run` is set.** Also plans only, on any branch.
 3. **The mass-closure guard fired.** Check the logs for `exceeds the safety limit`; rerun with
    `--force` if the closure is intended.
-4. **(Jira only) the close transition failed.** Look for `transition <name> is not available for
-   <id>, workflow offers ...` — `tracker.closeTransition` doesn't match a transition name reachable
-   from the ticket's current status. See `docs/trackers.md#jira` for how to find the right name.
+4. **(Jira only) the close transition failed.** Look for `none of [<names>] is available for <id>,
+   workflow offers ...` — no name in `tracker.closeTransition` is reachable from the ticket's
+   current status. Add a transition that status offers to the list; see `docs/trackers.md#jira` for
+   how to find the right names.
 5. **The tickets are hash-duplicated.** See above — duplicated hashes are never touched.

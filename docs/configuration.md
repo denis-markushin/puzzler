@@ -35,7 +35,7 @@ puzzle:
 | `tracker.url`             | string?                 | `null`       | Jira: required, the instance base URL. GitHub: defaults to `https://api.github.com`. GitLab: defaults to `https://gitlab.com`. Unused by `exec`.                                                                                                    |
 | `tracker.project`         | string?                 | `null`       | Required unless `type: exec`. Jira: project key. GitHub: `owner/repo`. GitLab: numeric project id or URL-encoded `group/project` path.                                                                                                              |
 | `tracker.issueType`       | string                  | `"Task"`     | Jira only: issue type used when `puzzle.typeMapping` does not resolve one for a puzzle.                                                                                                                                                             |
-| `tracker.closeTransition` | string                  | `"Done"`     | Jira only: name of the workflow transition applied when a ticket closes.                                                                                                                                                                            |
+| `tracker.closeTransition` | string or list          | `["Done"]`   | Jira only: workflow transitions tried in order when a ticket closes; the first one offered from the ticket's current status is applied. A single string means a list of one.                                                                       |
 | `tracker.token`           | string?                 | `null`       | Must be an `${ENV_VAR}` reference (see Secrets below). Read by `jira`, `github`, `gitlab`. Ignored by `exec` — the hook script reads its own secrets from its own environment.                                                                      |
 | `tracker.command`         | string?                 | `null`       | Required when `type: exec`. Shell command invoked once per operation; the JSON request goes to its stdin.                                                                                                                                           |
 | `tracker.labels`          | list of string          | `[]`         | Extra labels put on every ticket this repository files, on top of the labels a puzzle declares for itself. Rejected at load time unless each value is non-blank, free of whitespace, commas and colons, and free of the reserved `puzzler-` prefix. |
@@ -47,6 +47,25 @@ puzzle:
 
 The scanner also silently skips anything over 1&nbsp;MB and anything that looks binary (a null byte
 in its first 8000 bytes) — these never need to be listed under `scan.exclude`.
+
+## Several close transitions
+
+Jira workflows rarely offer the "done" transition from every status. A puzzle removed before
+anyone started its ticket leaves that ticket in the initial status, where only a transition like
+`Cancelled` may be offered. List the transitions in priority order; `puzzler` applies the first one
+the workflow offers from the ticket's current status:
+
+```yaml
+tracker:
+  type: jira
+  url: https://jira.example.com
+  project: PROJ
+  closeTransition: [To merged, Cancelled]
+  token: ${PUZZLER_TOKEN}
+
+repo:
+  name: backend
+```
 
 ## Secrets
 

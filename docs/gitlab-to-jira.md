@@ -102,10 +102,11 @@ that masks cleanly.
 - **Project key** — the prefix of the issue keys the project produces, e.g. `PROJ` in `PROJ-42`.
   It's shown on the project's summary page and in every issue key; it is not the project's numeric
   id or its display name.
-- **`closeTransition`** — must be the exact name of a workflow transition, not a status. Open an
-  issue in the workflow and read the button label of the transition that closes it, or just get the
-  name wrong once: `puzzler` lists every transition name the workflow actually offers from the
-  ticket's current status in the error message.
+- **`closeTransition`** — the exact name of a workflow transition, not a status, or a list of names
+  tried in order, e.g. `[To merged, Cancelled]` for a workflow that only offers `Cancelled` before
+  work starts. Open an issue in the workflow and read the button labels of the transitions that close
+  it, or just get the name wrong once: `puzzler` lists every transition name the workflow actually
+  offers from the ticket's current status in the error message.
 - **Account permissions** — the Jira account behind the token needs, on the target project:
   Browse Projects, Create Issues, Add Comments, and Transition Issues (specifically, permission to
   execute the transition named in `closeTransition`).
@@ -117,7 +118,7 @@ that masks cleanly.
 | `tracker type jira-cloud is not supported yet` at startup | `type: jira-cloud` in `.puzzler.yml` — refused before any request; switch to `type: jira` for Server/Data Center |
 | 404 on every request | a wrong `url` (this is not what `jira-cloud` produces — that type is refused during config validation, before any request is sent) |
 | 401 or 403 | the token shape does not match the instance: Server needs `username:password`, Data Center 8.14+ needs a personal access token |
-| `transition Done is not available` | `closeTransition` does not match the workflow; the message lists the names that do |
+| `none of [Done] is available` | no name in `closeTransition` is offered from the ticket's current status; the message lists the names that are — add one of them to the list |
 | `run puzzler inside a git repository` | the job cleared the checkout, or `git` is missing from a custom image |
 | Exit code 2 on the default branch | a guard refused: either the scan found nothing while tickets exist, or more than half the tickets would close |
 
