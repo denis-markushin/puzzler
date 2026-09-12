@@ -1,18 +1,21 @@
 package io.github.denismarkushin.puzzler.config
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import io.github.denismarkushin.puzzler.parse.PuzzleParser
 
 /**
  * Tracker settings.
  * The url and project fields are interpreted differently by each implementation; command is used only by type exec.
  * The labels are added to every ticket this repository files, on top of whatever the puzzle itself declares.
+ * The close transitions are tried in order; Jira applies the first one its workflow offers from the ticket's current status.
  */
 data class TrackerConfig(
     val type: String,
     val url: String? = null,
     val project: String? = null,
     val issueType: String = "Task",
-    val closeTransition: String = "Done",
+    @JsonFormat(with = [JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY])
+    val closeTransition: List<String> = listOf("Done"),
     val token: String? = null,
     val command: String? = null,
     val labels: List<String> = emptyList(),

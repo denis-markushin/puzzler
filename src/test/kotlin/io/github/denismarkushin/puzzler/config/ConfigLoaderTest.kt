@@ -277,4 +277,82 @@ class ConfigLoaderTest {
         val failure = runCatching { ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret")) }.exceptionOrNull()
         assertThat(failure is ConfigError, "an empty label was accepted").isEqualTo(true)
     }
+
+    @Test
+    fun `loader reads a single close transition as a list of one`(@TempDir root: Path) {
+        val file = config(
+            root,
+            """
+            tracker:
+              type: jira
+              url: https://jira.example.com
+              project: PROJ
+              closeTransition: To merged
+              token: ${'$'}{PUZZLER_TOKEN}
+            repo:
+              name: puzzler
+            """.trimIndent(),
+        )
+        val loaded = ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret"))
+        assertThat(loaded.tracker.closeTransition, "a single close transition was not read as a list of one")
+            .isEqualTo(listOf("To merged"))
+    }
+
+    @Test
+    fun `loader reads close transitions in the configured order`(@TempDir root: Path) {
+        val file = config(
+            root,
+            """
+            tracker:
+              type: jira
+              url: https://jira.example.com
+              project: PROJ
+              closeTransition: [To merged, Cancelled]
+              token: ${'$'}{PUZZLER_TOKEN}
+            repo:
+              name: puzzler
+            """.trimIndent(),
+        )
+        val loaded = ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret"))
+        assertThat(loaded.tracker.closeTransition, "close transitions lost their configured order")
+            .isEqualTo(listOf("To merged", "Cancelled"))
+    }
+
+    @Test
+    fun `loader rejects a blank close transition for jira`(@TempDir root: Path) {
+        val file = config(
+            root,
+            """
+            tracker:
+              type: jira
+              url: https://jira.example.com
+              project: PROJ
+              closeTransition: " "
+              token: ${'$'}{PUZZLER_TOKEN}
+            repo:
+              name: puzzler
+            """.trimIndent(),
+        )
+        val failure = runCatching { ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret")) }.exceptionOrNull()
+        assertThat(failure is ConfigError, "a blank close transition was accepted for jira").isEqualTo(true)
+    }
+
+    @Test
+    fun `loader rejects an empty list of close transitions for jira`(@TempDir root: Path) {
+        val file = config(
+            root,
+            """
+            tracker:
+              type: jira
+              url: https://jira.example.com
+              project: PROJ
+              closeTransition: []
+              token: ${'$'}{PUZZLER_TOKEN}
+            repo:
+              name: puzzler
+            """.trimIndent(),
+        )
+        val failure = runCatching { ConfigLoader.load(file, mapOf("PUZZLER_TOKEN" to "secret")) }.exceptionOrNull()
+        assertThat(failure is ConfigError, "an empty list of close transitions was accepted for jira").isEqualTo(true)
+    }
 }

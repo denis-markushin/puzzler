@@ -81,9 +81,10 @@ class JiraTracker(
         caller.call(request(URI.create("$base/issue/$id/comment")).POST(BodyPublishers.ofString(comment.toString())).build())
         val available = mapper.readTree(caller.call(request(URI.create("$base/issue/$id/transitions")).GET().build()))
             .path("transitions")
-        val target = available.firstOrNull { transition -> transition.path("name").asText() == config.closeTransition }
+        val offered = available.associateBy { transition -> transition.path("name").asText() }
+        val target = config.closeTransition.firstNotNullOfOrNull { name -> offered[name] }
             ?: throw TrackerError(
-                "transition ${config.closeTransition} is not available for $id, workflow offers " +
+                "none of ${config.closeTransition} is available for $id, workflow offers " +
                     available.joinToString(", ") { transition -> transition.path("name").asText() },
             )
         val move = mapper.createObjectNode().apply { putObject("transition").put("id", target.path("id").asText()) }
