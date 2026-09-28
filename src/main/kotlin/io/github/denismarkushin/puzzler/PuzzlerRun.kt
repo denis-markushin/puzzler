@@ -38,7 +38,7 @@ class PuzzlerRun(
     fun execute(): RunResult {
         val onDefaultBranch = !context.branch.isNullOrBlank() && context.branch == defaultBranch
         val planned = dryRun || !onDefaultBranch
-        val puzzles = scanner.blocks().mapNotNull { block -> parser.parse(block) }
+        val puzzles = scanner.blocks().flatMap { block -> parser.parse(block) }
         if (planned) {
             val plan = try {
                 reconciler.plan(config.repo.name, puzzles, force)

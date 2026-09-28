@@ -80,7 +80,7 @@ class PuzzlerRunTest {
     fun `run closes a ticket whose puzzle is gone`(@TempDir root: Path) {
         root.resolve("Cache.kt").writeText("// TODO: live puzzle")
         val hash = PuzzleParser(PuzzleParser.DEFAULT_PATTERN)
-            .parse(SourceScanner(root, emptyList(), ListingGit("Cache.kt")).blocks().single())!!.hash
+            .parse(SourceScanner(root, emptyList(), ListingGit("Cache.kt")).blocks().single()).single().hash
         val tracker = RecordingTracker(mutableListOf(Ticket("OLD-1", hash), Ticket("OLD-2", "gonehash1234")))
         run(root, tracker, "main", false).execute()
         assertThat(tracker.closed, "an orphaned ticket was not closed").isEqualTo(listOf("OLD-2"))
