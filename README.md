@@ -21,8 +21,9 @@ Scan → Parse → Hash → Reconcile → Apply
 1. **Scan** — `git ls-files` lists every tracked (and untracked-but-not-ignored) file; binary
    files and anything over 1&nbsp;MB are skipped, and contiguous comment lines are grouped into
    blocks.
-2. **Parse** — each block's first line is matched against a regexp; a match yields a puzzle
-   (subject, optional type/estimate/assignee/labels, and a body from any more-indented following lines).
+2. **Parse** — each line of a block is matched against a regexp; a match yields a puzzle
+   (subject, optional type/estimate/assignee/labels, and a body from any more-indented following lines),
+   so one block can hold several puzzles.
 3. **Hash** — a puzzle's identity is a 12-character hash of its *normalized text only* (subject +
    body). Moving a file or shifting line numbers keeps the same ticket; editing the puzzle's text
    closes the old ticket and opens a new one — see `docs/puzzle-format.md`.

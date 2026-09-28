@@ -1,8 +1,9 @@
 # Puzzle format
 
-A puzzle is a comment block whose first line matches the puzzle pattern (a regexp with named
-capture groups). The scanner has no notion of programming languages — it only recognizes comment
-line prefixes: `//`, `#`, `--`, `*` (the continuation lines of a `/* */` block), and `;`.
+A puzzle starts at a comment line that matches the puzzle pattern (a regexp with named capture
+groups); one comment block can hold several puzzles. The scanner has no notion of programming
+languages — it only recognizes comment line prefixes: `//`, `#`, `--`, `*` (the continuation lines
+of a `/* */` block), and `;`.
 
 ## Default pattern
 
@@ -44,29 +45,39 @@ CREATE INDEX idx_orders_status ON orders (status);
 
 The head line (the one matched by the pattern) has an indent. Every following comment line in the
 *same* comment block becomes part of the body **only while its indent stays strictly greater** than
-the head's indent. The first line at the same or lower indent ends the body — and everything from
-that line on is ignored, it does not start a new puzzle:
+the head's indent. The first line at the same or lower indent ends the body:
 
 ```kotlin
 // TODO: extract cache
 //   needs TTL           <- indent 2, included in the body
 // ordinary comment       <- indent 0, same as head: body stops here
-//   and this is not body either  <- never reached, still ignored
+//   and this is not body either  <- not a head either, ignored
 ```
 
 Body: `needs TTL`.
 
-This also means two markers placed back-to-back in the same comment block (no blank line or code
-line between them) do **not** produce two puzzles — the scanner treats consecutive comment lines
-as one block, and the parser only reads the first line as a head. The second `TODO:` line is
-silently swallowed. Separate puzzles with a blank line or a line of code:
+## Several puzzles in one block
+
+Every line that matches the pattern and is not inside a body starts a puzzle of its own, so markers
+can sit back-to-back in one comment block, or below an ordinary comment, and each gets its own body:
 
 ```kotlin
-// TODO: first puzzle
-// TODO: second one gets lost, same block as above
-
-// TODO: this one is fine, a blank line split the block
+// TODO(debt, 30min): drop the legacy exporter
+//   still read by the nightly report      <- body of the first puzzle
+// TODO(debt, 30min): rename the export flag
+//   keep the old name as an alias         <- body of the second puzzle
 ```
+
+A matching line indented deeper than a head is inside that head's body and stays there as text,
+it does not start a puzzle. Outdent it to the head's level to make it a puzzle of its own:
+
+```kotlin
+// TODO: split the importer
+//   HACK: csv branch copies the json one  <- body of the TODO, not a separate puzzle
+```
+
+Adding a puzzle below another one leaves the hash of the upper puzzle unchanged, so its ticket stays
+open and is not filed again.
 
 ## Named group contract
 
@@ -152,3 +163,11 @@ all and was ignored, and the file listing arrived with non-ASCII names escaped, 
 `Кэш.kt` was never scanned. Both are visible now, and every such puzzle already in your source
 becomes a ticket on the first default-branch run after the upgrade, all at once. Run `--dry-run`
 first and check the plan before you let that run touch the tracker.
+
+## Upgrading: every head in a block is read
+
+Before this release only the first line of a comment block could be a head. A second marker in the
+same block, or a marker below an ordinary comment line — including a `*` line of a `/* */` block
+below its description — was ignored. Each of those is a puzzle now, and becomes a ticket on the
+first default-branch run after the upgrade. Puzzles already filed keep their hashes, so none of
+their tickets is closed and filed again. Run `--dry-run` first and check the plan.
