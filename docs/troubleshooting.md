@@ -18,27 +18,38 @@ below.
 
 ### The empty-scan guard
 
-> `scan found no puzzles while <repo> has <n> open tickets, refusing to close them`
+> `scan read no files while <repo> has <n> open tickets, refusing to close them`
 
-Fires when the scan finds **zero** puzzles anywhere in the working tree while the tracker still
-has open tickets for the repo. A scan of nothing is far more likely to mean something is broken —
-wrong working directory, an empty `git ls-files` because the process isn't actually inside the
-repo, a `puzzle.pattern` typo that no longer matches anything — than that every puzzle in the
-codebase was genuinely resolved in one commit. Refusing to act keeps a misconfiguration from
-closing an entire backlog of real tickets in one run.
+Fires when the scan reads **zero files** while the tracker still has open tickets for the repo.
+A file counts as read once it survives `scan.exclude` and is neither binary, nor over 1&nbsp;MB,
+nor broken UTF-8. A scan that read nothing means the environment is broken — an empty
+`git ls-files` because the checkout is missing or sparse, a `scan.exclude` glob that swallows the
+whole tree — and says nothing about the puzzles. Refusing to act keeps that from closing the
+backlog.
 
-**This guard is never overridden by `--force`.** If the scan is legitimately empty (the last
-puzzle really was removed), close the remaining ticket(s) by hand, or adjust `scan.exclude` /
-`puzzle.pattern` if the scan is wrongly finding nothing.
+**This guard is never overridden by `--force`.** Fix the checkout or `scan.exclude` instead.
+
+A scan that read files but found no puzzles is not this guard's business: it is an ordinary
+closure of every open ticket, subject to the mass-closure guard below. So removing the last puzzle
+of a small backlog closes its ticket on the next run.
 
 ### The mass-closure guard
 
 > `closing <n> of <m> tickets in <repo> exceeds the safety limit, rerun with --force if intended`
 
-Fires when a run would close more than half of the currently-open tickets for a repo. A large,
-sudden wave of closures is the signature of a broken hash (a regex change, a normalization bug) or
-a tracker query returning the wrong scope, not of a normal cleanup commit. `--force` overrides this
-one when the mass closure is actually intended (e.g. after removing a large deprecated module).
+Fires when a run would close **three or more** tickets that make up more than half of the
+currently-open tickets for a repo. A large, sudden wave of closures is the signature of a broken
+hash (a regex change, a normalization bug), a `puzzle.pattern` typo that no longer matches
+anything, a run inside the wrong repository, or a tracker query returning the wrong scope, not of
+a normal cleanup commit. `--force` overrides this one when the mass closure is actually intended
+(e.g. after removing a large deprecated module, or the last puzzles of a backlog of three or
+more).
+
+Closing **one or two** tickets in a run always passes, whatever share of the backlog they are.
+Without that allowance a backlog of one or two tickets could never be emptied or reworded: every
+removal would be "more than half". The price is bounded: a `puzzle.pattern` typo or a run in the
+wrong repository can close at most two tickets before this guard steps in. Once the cause is
+fixed, the next run files those puzzles again as new tickets.
 
 ## "git listing is unavailable" / `NotARepository`
 
@@ -68,9 +79,9 @@ Two situations produce more than one open ticket for the same puzzle:
 - **The puzzle's text was edited.** The identity hash covers only the puzzle's normalized subject
   and body — deliberately not its file or line, so moving code around never touches a ticket. But
   it does mean an edited puzzle is, by design, a *new* puzzle: the next run creates a ticket for
-  the new hash and closes the ticket for the old one (subject to the mass-closure guard above).
-  Between those two runs (or if the guard blocks the closure) both tickets can be open at once —
-  this is expected, not a bug.
+  the new hash and closes the ticket for the old one (subject to the mass-closure guard above,
+  which only matters once three or more puzzles are edited in one run). If the guard blocks the
+  run, nothing is created or closed until it is rerun with `--force`.
 
 If the reconciler ever finds **several open tickets sharing the same hash**, it leaves all of them
 untouched and logs a warning (`hash <hash> is attached to several tickets in <repo>, leaving them
@@ -87,8 +98,9 @@ Work through these in order:
    `puzzler` actually detected; in CI, confirm the ref-name environment variable your CI system
    sets is one `puzzler` reads (see `docs/ci-recipes.md`), or pass `--branch` explicitly.
 2. **`--dry-run` is set.** Also plans only, on any branch.
-3. **The mass-closure guard fired.** Check the logs for `exceeds the safety limit`; rerun with
-   `--force` if the closure is intended.
+3. **A guard fired.** Check the logs for `exceeds the safety limit` (three or more closures that
+   are more than half of the backlog; rerun with `--force` if the closure is intended) or for
+   `scan read no files` (a broken checkout or `scan.exclude`; `--force` does not help).
 4. **(Jira only) the close transition failed.** Look for `none of [<names>] is available for <id>,
    workflow offers ...` — no name in `tracker.closeTransition` is reachable from the ticket's
    current status. Add a transition that status offers to the list; see `docs/trackers.md#jira` for
