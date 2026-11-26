@@ -111,6 +111,13 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `plan closes exactly half of a larger backlog without force`() {
+        val existing = listOf("e4c", "b01", "c5a", "7d2", "f90", "a13").mapIndexed { index, hash -> Ticket("OLD-${index + 3}", hash) }
+        val plan = Reconciler(FakeTracker(existing)).plan("puzzler", listOf(puzzle("e4c"), puzzle("c5a"), puzzle("f90")), 71, false)
+        assertThat(plan.close.size, "closing exactly half of the backlog was refused").isEqualTo(3)
+    }
+
+    @Test
     fun `plan refuses to close more than half of the tickets`() {
         val existing = listOf(Ticket("OLD-1", "aaa"), Ticket("OLD-2", "bbb"), Ticket("OLD-3", "ccc"), Ticket("OLD-4", "ddd"))
         val failure = runCatching {

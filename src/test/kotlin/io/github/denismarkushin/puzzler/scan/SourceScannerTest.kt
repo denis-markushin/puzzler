@@ -96,7 +96,7 @@ class SourceScannerTest {
 
     @Test
     fun `scanner refuses to work outside a repository`(@TempDir root: Path) {
-        val failure = runCatching { SourceScanner(root, emptyList(), ListingGit(null)).scan().blocks }.exceptionOrNull()
+        val failure = runCatching { SourceScanner(root, emptyList(), ListingGit(null)).scan() }.exceptionOrNull()
         assertThat(failure is NotARepository, "missing git listing did not raise NotARepository").isEqualTo(true)
     }
 

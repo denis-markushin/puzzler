@@ -46,7 +46,7 @@ class SourceScanner(
             .filter { entry -> entry.isNotEmpty() }
             .filterNot { entry -> excluded(entry) }
             .mapNotNull { entry -> readable(entry) }
-            .map { (entry, text) -> blocks(entry, text).toList() }
+            .map { (entry, text) -> blocks(entry, text) }
             .toList()
         return Scan(files.size, files.flatten())
     }
@@ -72,7 +72,7 @@ class SourceScanner(
         return text?.let { content -> entry to content }
     }
 
-    private fun blocks(entry: String, text: String): Sequence<CommentBlock> {
+    private fun blocks(entry: String, text: String): List<CommentBlock> {
         val collected = mutableListOf<CommentBlock>()
         var current = mutableListOf<CommentLine>()
         text.lineSequence().forEachIndexed { index, raw ->
@@ -91,7 +91,7 @@ class SourceScanner(
         if (current.isNotEmpty()) {
             collected.add(CommentBlock(entry, current.toList()))
         }
-        return collected.asSequence()
+        return collected
     }
 
     private companion object {

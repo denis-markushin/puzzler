@@ -21,11 +21,15 @@ below.
 > `scan read no files while <repo> has <n> open tickets, refusing to close them`
 
 Fires when the scan reads **zero files** while the tracker still has open tickets for the repo.
-A file counts as read once it survives `scan.exclude` and is neither binary, nor over 1&nbsp;MB,
-nor broken UTF-8. A scan that read nothing means the environment is broken — an empty
-`git ls-files` because the checkout is missing or sparse, a `scan.exclude` glob that swallows the
-whole tree — and says nothing about the puzzles. Refusing to act keeps that from closing the
-backlog.
+A file counts as read once it survives `scan.exclude`, exists as a regular file, and is neither
+binary, nor over 1&nbsp;MB, nor broken UTF-8. A scan that read nothing means the environment is
+broken — a `scan.exclude` glob that swallows the whole tree, or a working tree whose files were
+removed before the run — and says nothing about the puzzles. Refusing to act keeps that from
+closing the backlog.
+
+`.puzzler.yml` is a file like any other: as long as it lies inside the working tree and is not
+excluded, the scan reads at least one file and this guard stays silent. A checkout that holds
+little besides the config is therefore the mass-closure guard's business, not this one's.
 
 **This guard is never overridden by `--force`.** Fix the checkout or `scan.exclude` instead.
 
@@ -79,9 +83,11 @@ Two situations produce more than one open ticket for the same puzzle:
 - **The puzzle's text was edited.** The identity hash covers only the puzzle's normalized subject
   and body — deliberately not its file or line, so moving code around never touches a ticket. But
   it does mean an edited puzzle is, by design, a *new* puzzle: the next run creates a ticket for
-  the new hash and closes the ticket for the old one (subject to the mass-closure guard above,
-  which only matters once three or more puzzles are edited in one run). If the guard blocks the
-  run, nothing is created or closed until it is rerun with `--force`.
+  the new hash and closes the ticket for the old one. Tickets are created before any is closed,
+  so a tracker error in the middle of that run leaves both open until the next run closes the old
+  one — this is expected, not a bug. Editing three or more puzzles at once can trip the
+  mass-closure guard above; then nothing is created or closed until the run is repeated with
+  `--force`.
 
 If the reconciler ever finds **several open tickets sharing the same hash**, it leaves all of them
 untouched and logs a warning (`hash <hash> is attached to several tickets in <repo>, leaving them
