@@ -80,7 +80,7 @@ class PuzzlerRunTest {
     fun `run closes a ticket whose puzzle is gone`(@TempDir root: Path) {
         root.resolve("Cache.kt").writeText("// TODO: live puzzle")
         val hash = PuzzleParser(PuzzleParser.DEFAULT_PATTERN)
-            .parse(SourceScanner(root, emptyList(), ListingGit("Cache.kt")).blocks().single()).single().hash
+            .parse(SourceScanner(root, emptyList(), ListingGit("Cache.kt")).scan().blocks.single()).single().hash
         val tracker = RecordingTracker(mutableListOf(Ticket("OLD-1", hash), Ticket("OLD-2", "gonehash1234")))
         run(root, tracker, "main", false).execute()
         assertThat(tracker.closed, "an orphaned ticket was not closed").isEqualTo(listOf("OLD-2"))
@@ -133,8 +133,16 @@ class PuzzlerRunTest {
 
     @Test
     @Timeout(30)
+    fun `run closes the ticket of the last removed puzzle`(@TempDir root: Path) {
+        root.resolve("Cache.kt").writeText("val store = mutableMapOf<String, String>()")
+        val tracker = RecordingTracker(mutableListOf(Ticket("OLD-41", "d3adb33f")))
+        run(root, tracker, "main", false).execute()
+        assertThat(tracker.closed, "the ticket of the last removed puzzle stayed open").isEqualTo(listOf("OLD-41"))
+    }
+
+    @Test
+    @Timeout(30)
     fun `dry run reports zero actions when the empty scan guard trips`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("no puzzle here")
         val tracker = RecordingTracker(mutableListOf(Ticket("OLD-1", "somehash")))
         val result = run(root, tracker, "main", true).execute()
         assertThat(result, "a guard tripping during a dry run produced non-zero results").isEqualTo(RunResult(0, 0, true))
@@ -143,7 +151,6 @@ class PuzzlerRunTest {
     @Test
     @Timeout(30)
     fun `default branch run still throws when the empty scan guard trips`(@TempDir root: Path) {
-        root.resolve("Cache.kt").writeText("no puzzle here")
         val tracker = RecordingTracker(mutableListOf(Ticket("OLD-1", "somehash")))
         val failure = runCatching { run(root, tracker, "main", false).execute() }.exceptionOrNull()
         assertThat(failure is GuardViolation, "a guard violation on the default branch was swallowed instead of thrown").isEqualTo(true)

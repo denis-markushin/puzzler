@@ -29,7 +29,9 @@ Scan → Parse → Hash → Reconcile → Apply
    closes the old ticket and opens a new one — see `docs/puzzle-format.md`.
 4. **Reconcile** — the puzzles found in code are diffed against the tracker's currently open
    tickets (matched by hash). Two guards refuse to apply a diff that looks like a broken
-   environment rather than real work — see `docs/troubleshooting.md`.
+   environment rather than real work: a scan that read no files, and a closure of three or more
+   tickets that is more than half of the backlog. Closing one or two tickets always passes, so a
+   small backlog empties on its own — see `docs/troubleshooting.md`.
 5. **Apply** — new puzzles get created, orphaned tickets get closed. This step only runs on the
    default branch; everywhere else (feature branches, an undetermined branch, or `--dry-run`) the
    run degrades to a plan and writes nothing.

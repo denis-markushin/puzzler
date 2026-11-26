@@ -38,10 +38,11 @@ class PuzzlerRun(
     fun execute(): RunResult {
         val onDefaultBranch = !context.branch.isNullOrBlank() && context.branch == defaultBranch
         val planned = dryRun || !onDefaultBranch
-        val puzzles = scanner.blocks().flatMap { block -> parser.parse(block) }
+        val scan = scanner.scan()
+        val puzzles = scan.blocks.flatMap { block -> parser.parse(block) }
         if (planned) {
             val plan = try {
-                reconciler.plan(config.repo.name, puzzles, force)
+                reconciler.plan(config.repo.name, puzzles, scan.files, force)
             } catch (violation: GuardViolation) {
                 log.warn { violation.message }
                 return RunResult(0, 0, true)
@@ -49,7 +50,7 @@ class PuzzlerRun(
             log.info { "planning only: ${plan.create.size} to create, ${plan.close.size} to close in ${config.repo.name}" }
             return RunResult(plan.create.size, plan.close.size, true)
         }
-        val plan = reconciler.plan(config.repo.name, puzzles, force)
+        val plan = reconciler.plan(config.repo.name, puzzles, scan.files, force)
         plan.create.forEach { puzzle ->
             val id = tracker.create(puzzle)
             log.info { "created $id for puzzle ${puzzle.hash} at ${puzzle.path}:${puzzle.line}" }

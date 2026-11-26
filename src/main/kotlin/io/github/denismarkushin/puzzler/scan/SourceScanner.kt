@@ -19,6 +19,15 @@ class NotARepository(
 ) : RuntimeException("git listing is unavailable in $root, run puzzler inside a git repository")
 
 /**
+ * Outcome of a traversal.
+ * The number of files read tells an empty working tree apart from code that holds no comments.
+ */
+data class Scan(
+    val files: Int,
+    val blocks: List<CommentBlock>,
+)
+
+/**
  * Traversal of the working tree and extraction of comment blocks.
  * Knows nothing about programming languages: relies only on line prefixes.
  */
@@ -29,16 +38,17 @@ class SourceScanner(
 ) {
     private val matchers = exclude.flatMap { glob -> variants(glob) }.map { glob -> FileSystems.getDefault().getPathMatcher("glob:$glob") }
 
-    fun blocks(): List<CommentBlock> {
+    fun scan(): Scan {
         val listing = git.run("-c", "core.quotePath=false", "ls-files", "--cached", "--others", "--exclude-standard")
             ?: throw NotARepository(root)
-        return listing.lineSequence()
+        val files = listing.lineSequence()
             .map { entry -> entry.trim() }
             .filter { entry -> entry.isNotEmpty() }
             .filterNot { entry -> excluded(entry) }
             .mapNotNull { entry -> readable(entry) }
-            .flatMap { (entry, text) -> blocks(entry, text) }
+            .map { (entry, text) -> blocks(entry, text) }
             .toList()
+        return Scan(files.size, files.flatten())
     }
 
     private fun excluded(entry: String) = matchers.any { matcher -> matcher.matches(Path.of(entry)) }
@@ -62,7 +72,7 @@ class SourceScanner(
         return text?.let { content -> entry to content }
     }
 
-    private fun blocks(entry: String, text: String): Sequence<CommentBlock> {
+    private fun blocks(entry: String, text: String): List<CommentBlock> {
         val collected = mutableListOf<CommentBlock>()
         var current = mutableListOf<CommentLine>()
         text.lineSequence().forEachIndexed { index, raw ->
@@ -81,7 +91,7 @@ class SourceScanner(
         if (current.isNotEmpty()) {
             collected.add(CommentBlock(entry, current.toList()))
         }
-        return collected.asSequence()
+        return collected
     }
 
     private companion object {

@@ -120,6 +120,6 @@ that masks cleanly.
 | 401 or 403 | the token shape does not match the instance: Server needs `username:password`, Data Center 8.14+ needs a personal access token |
 | `none of [Done] is available` | no name in `closeTransition` is offered from the ticket's current status; the message lists the names that are — add one of them to the list |
 | `run puzzler inside a git repository` | the job cleared the checkout, or `git` is missing from a custom image |
-| Exit code 2 on the default branch | a guard refused: either the scan found nothing while tickets exist, or more than half the tickets would close |
+| Exit code 2 on the default branch | a guard refused: either the scan read no files while tickets exist, or three or more tickets making up more than half of the backlog would close |
 
 See `docs/troubleshooting.md` for the full detail behind the last two rows.

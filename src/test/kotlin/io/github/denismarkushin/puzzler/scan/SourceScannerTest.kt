@@ -31,7 +31,7 @@ class SourceScannerTest {
             }
             """.trimIndent(),
         )
-        val blocks = SourceScanner(root, emptyList(), ListingGit("Cache.kt")).blocks()
+        val blocks = SourceScanner(root, emptyList(), ListingGit("Cache.kt")).scan().blocks
         assertThat(blocks.single().lines.size, "consecutive comment lines were not grouped").isEqualTo(2)
     }
 
@@ -44,21 +44,21 @@ class SourceScannerTest {
             # second
             """.trimIndent(),
         )
-        val blocks = SourceScanner(root, emptyList(), ListingGit("Cache.kt")).blocks()
+        val blocks = SourceScanner(root, emptyList(), ListingGit("Cache.kt")).scan().blocks
         assertThat(blocks.size, "comment blocks separated by code were merged").isEqualTo(2)
     }
 
     @Test
     fun `scanner measures indent after the prefix`(@TempDir root: Path) {
         root.resolve("Cache.kt").writeText("    //  indent two")
-        val blocks = SourceScanner(root, emptyList(), ListingGit("Cache.kt")).blocks()
+        val blocks = SourceScanner(root, emptyList(), ListingGit("Cache.kt")).scan().blocks
         assertThat(blocks.single().lines.single().indent, "indent was measured before the comment prefix").isEqualTo(2)
     }
 
     @Test
     fun `scanner reports one based line numbers`(@TempDir root: Path) {
         root.resolve("Cache.kt").writeText("code()\ncode()\n// third")
-        val blocks = SourceScanner(root, emptyList(), ListingGit("Cache.kt")).blocks()
+        val blocks = SourceScanner(root, emptyList(), ListingGit("Cache.kt")).scan().blocks
         assertThat(blocks.single().lines.single().number, "line numbers are not one based").isEqualTo(3)
     }
 
@@ -66,20 +66,37 @@ class SourceScannerTest {
     fun `scanner skips excluded paths`(@TempDir root: Path) {
         root.resolve("build").createDirectories()
         root.resolve("build/Generated.kt").writeText("// TODO: do not file")
-        val blocks = SourceScanner(root, listOf("**/build/**"), ListingGit("build/Generated.kt")).blocks()
+        val blocks = SourceScanner(root, listOf("**/build/**"), ListingGit("build/Generated.kt")).scan().blocks
         assertThat(blocks, "excluded path was scanned anyway").isEmpty()
     }
 
     @Test
     fun `scanner skips binary files`(@TempDir root: Path) {
         root.resolve("logo.png").writeBytes("// TODO: do not file".toByteArray() + 0)
-        val blocks = SourceScanner(root, emptyList(), ListingGit("logo.png")).blocks()
+        val blocks = SourceScanner(root, emptyList(), ListingGit("logo.png")).scan().blocks
         assertThat(blocks, "a file with a zero byte was parsed as source").isEmpty()
     }
 
     @Test
+    fun `scanner counts the files it read`(@TempDir root: Path) {
+        root.resolve("Cache.kt").writeText("val store = 4")
+        root.resolve("Queue.kt").writeText("// TODO: bound the queue")
+        root.resolve("logo.png").writeBytes("pixels".toByteArray() + 0)
+        val scan = SourceScanner(root, emptyList(), ListingGit("Cache.kt\nQueue.kt\nlogo.png\nGone.kt")).scan()
+        assertThat(scan.files, "the scan miscounted the files it read").isEqualTo(2)
+    }
+
+    @Test
+    fun `scanner counts no file when everything is excluded`(@TempDir root: Path) {
+        root.resolve("build").createDirectories()
+        root.resolve("build/Generated.kt").writeText("val generated = 7")
+        val scan = SourceScanner(root, listOf("**/build/**"), ListingGit("build/Generated.kt")).scan()
+        assertThat(scan.files, "an excluded file was counted as read").isEqualTo(0)
+    }
+
+    @Test
     fun `scanner refuses to work outside a repository`(@TempDir root: Path) {
-        val failure = runCatching { SourceScanner(root, emptyList(), ListingGit(null)).blocks() }.exceptionOrNull()
+        val failure = runCatching { SourceScanner(root, emptyList(), ListingGit(null)).scan() }.exceptionOrNull()
         assertThat(failure is NotARepository, "missing git listing did not raise NotARepository").isEqualTo(true)
     }
 
@@ -88,7 +105,7 @@ class SourceScannerTest {
     fun `scanner reads a file with a cyrillic name`(@TempDir root: Path) {
         ProcessGitCommand(root).run("init", ".")
         root.resolve("Кэш.kt").writeText("// TODO: вынести кэш")
-        val blocks = SourceScanner(root, listOf("**/build/**"), ProcessGitCommand(root)).blocks()
+        val blocks = SourceScanner(root, listOf("**/build/**"), ProcessGitCommand(root)).scan().blocks
         assertThat(blocks.singleOrNull()?.lines?.single()?.text?.trim(), "a cyrillic file name never reached the scanner")
             .isEqualTo("TODO: вынести кэш")
     }
